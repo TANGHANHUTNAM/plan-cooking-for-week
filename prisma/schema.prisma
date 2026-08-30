@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FoodType {
+  MAIN
+  SIDE
+}
+
+enum MealPeriod {
+  LUNCH
+  DINNER
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  absences     MealAbsence[]
+
+  @@map("users")
+}
+
+model Food {
+  id            String         @id @default(cuid())
+  name          String
+  type          FoodType
+  cookingMethod String
+  note          String?
+  favoriteScore Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  ingredients   Ingredient[]
+  mealItems     MealItem[]
+  statistic     FoodStatistic?
+
+  @@map("foods")
+}
+
+model Ingredient {
+  id     String @id @default(cuid())
+  foodId String
+  name   String
+  food   Food   @relation(fields: [foodId], references: [id], onDelete: Cascade)
+
+  @@map("ingredients")
+}
+
+model MealPlan {
+  id        String   @id @default(cuid())
+  weekStart DateTime @db.Date
+  createdAt DateTime @default(now())
+  meals     Meal[]
+
+  // thực đơn là của chung cả nhà — không gắn với người tạo,
+  // nhờ vậy xóa tài khoản không đụng tới lịch tuần
+  @@unique([weekStart])
+  @@map("meal_plans")
+}
+
+model Meal {
+  id         String        @id @default(cuid())
+  mealPlanId String
+  date       DateTime      @db.Date
+  period     MealPeriod
+  cookedAt   DateTime?
+  mealPlan   MealPlan      @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  items      MealItem[]
+  absences   MealAbsence[]
+
+  @@unique([mealPlanId, date, period])
+  @@map("meals")
+}
+
+/// Một dòng = thành viên KHÔNG ăn bữa đó (mặc định ai cũng ăn)
+model MealAbsence {
+  id     String @id @default(cuid())
+  mealId String
+  userId String
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mealId, userId])
+  @@map("meal_absences")
+}
+
+model MealItem {
+  id       String   @id @default(cuid())
+  mealId   String
+  foodId   String
+  position FoodType
+  meal     Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  food     Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+
+  @@unique([mealId, position])
+  @@map("meal_items")
+}
+
+model FoodStatistic {
+  id           String    @id @default(cuid())
+  foodId       String    @unique
+  totalCooked  Int       @default(0)
+  lastCookedAt DateTime?
+  food         Food      @relation(fields: [foodId], references: [id], onDelete: Cascade)
+
+  @@map("food_statistics")
+}
