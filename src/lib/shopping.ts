@@ -8,6 +8,8 @@ export interface ShoppingDish {
 export interface ShoppingMeal {
   dateISO: string;
   period: "LUNCH" | "DINNER";
+  /** ghi chú của bữa (vd: thiếu nước mắm) — hiện kèm khi đi chợ */
+  note?: string | null;
   dishes: ShoppingDish[];
 }
 

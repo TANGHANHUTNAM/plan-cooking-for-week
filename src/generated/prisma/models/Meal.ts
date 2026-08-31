@@ -30,6 +30,7 @@ export type MealMinAggregateOutputType = {
   date: Date | null
   period: $Enums.MealPeriod | null
   cookedAt: Date | null
+  note: string | null
 }
 
 export type MealMaxAggregateOutputType = {
@@ -38,6 +39,7 @@ export type MealMaxAggregateOutputType = {
   date: Date | null
   period: $Enums.MealPeriod | null
   cookedAt: Date | null
+  note: string | null
 }
 
 export type MealCountAggregateOutputType = {
@@ -46,6 +48,7 @@ export type MealCountAggregateOutputType = {
   date: number
   period: number
   cookedAt: number
+  note: number
   _all: number
 }
 
@@ -56,6 +59,7 @@ export type MealMinAggregateInputType = {
   date?: true
   period?: true
   cookedAt?: true
+  note?: true
 }
 
 export type MealMaxAggregateInputType = {
@@ -64,6 +68,7 @@ export type MealMaxAggregateInputType = {
   date?: true
   period?: true
   cookedAt?: true
+  note?: true
 }
 
 export type MealCountAggregateInputType = {
@@ -72,6 +77,7 @@ export type MealCountAggregateInputType = {
   date?: true
   period?: true
   cookedAt?: true
+  note?: true
   _all?: true
 }
 
@@ -153,6 +159,7 @@ export type MealGroupByOutputType = {
   date: Date
   period: $Enums.MealPeriod
   cookedAt: Date | null
+  note: string | null
   _count: MealCountAggregateOutputType | null
   _min: MealMinAggregateOutputType | null
   _max: MealMaxAggregateOutputType | null
@@ -182,6 +189,7 @@ export type MealWhereInput = {
   date?: Prisma.DateTimeFilter<"Meal"> | Date | string
   period?: Prisma.EnumMealPeriodFilter<"Meal"> | $Enums.MealPeriod
   cookedAt?: Prisma.DateTimeNullableFilter<"Meal"> | Date | string | null
+  note?: Prisma.StringNullableFilter<"Meal"> | string | null
   mealPlan?: Prisma.XOR<Prisma.MealPlanScalarRelationFilter, Prisma.MealPlanWhereInput>
   items?: Prisma.MealItemListRelationFilter
   absences?: Prisma.MealAbsenceListRelationFilter
@@ -193,6 +201,7 @@ export type MealOrderByWithRelationInput = {
   date?: Prisma.SortOrder
   period?: Prisma.SortOrder
   cookedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   mealPlan?: Prisma.MealPlanOrderByWithRelationInput
   items?: Prisma.MealItemOrderByRelationAggregateInput
   absences?: Prisma.MealAbsenceOrderByRelationAggregateInput
@@ -208,6 +217,7 @@ export type MealWhereUniqueInput = Prisma.AtLeast<{
   date?: Prisma.DateTimeFilter<"Meal"> | Date | string
   period?: Prisma.EnumMealPeriodFilter<"Meal"> | $Enums.MealPeriod
   cookedAt?: Prisma.DateTimeNullableFilter<"Meal"> | Date | string | null
+  note?: Prisma.StringNullableFilter<"Meal"> | string | null
   mealPlan?: Prisma.XOR<Prisma.MealPlanScalarRelationFilter, Prisma.MealPlanWhereInput>
   items?: Prisma.MealItemListRelationFilter
   absences?: Prisma.MealAbsenceListRelationFilter
@@ -219,6 +229,7 @@ export type MealOrderByWithAggregationInput = {
   date?: Prisma.SortOrder
   period?: Prisma.SortOrder
   cookedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.MealCountOrderByAggregateInput
   _max?: Prisma.MealMaxOrderByAggregateInput
   _min?: Prisma.MealMinOrderByAggregateInput
@@ -233,6 +244,7 @@ export type MealScalarWhereWithAggregatesInput = {
   date?: Prisma.DateTimeWithAggregatesFilter<"Meal"> | Date | string
   period?: Prisma.EnumMealPeriodWithAggregatesFilter<"Meal"> | $Enums.MealPeriod
   cookedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Meal"> | Date | string | null
+  note?: Prisma.StringNullableWithAggregatesFilter<"Meal"> | string | null
 }
 
 export type MealCreateInput = {
@@ -240,6 +252,7 @@ export type MealCreateInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   mealPlan: Prisma.MealPlanCreateNestedOneWithoutMealsInput
   items?: Prisma.MealItemCreateNestedManyWithoutMealInput
   absences?: Prisma.MealAbsenceCreateNestedManyWithoutMealInput
@@ -251,6 +264,7 @@ export type MealUncheckedCreateInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   items?: Prisma.MealItemUncheckedCreateNestedManyWithoutMealInput
   absences?: Prisma.MealAbsenceUncheckedCreateNestedManyWithoutMealInput
 }
@@ -260,6 +274,7 @@ export type MealUpdateInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mealPlan?: Prisma.MealPlanUpdateOneRequiredWithoutMealsNestedInput
   items?: Prisma.MealItemUpdateManyWithoutMealNestedInput
   absences?: Prisma.MealAbsenceUpdateManyWithoutMealNestedInput
@@ -271,6 +286,7 @@ export type MealUncheckedUpdateInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   items?: Prisma.MealItemUncheckedUpdateManyWithoutMealNestedInput
   absences?: Prisma.MealAbsenceUncheckedUpdateManyWithoutMealNestedInput
 }
@@ -281,6 +297,7 @@ export type MealCreateManyInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
 }
 
 export type MealUpdateManyMutationInput = {
@@ -288,6 +305,7 @@ export type MealUpdateManyMutationInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MealUncheckedUpdateManyInput = {
@@ -296,6 +314,7 @@ export type MealUncheckedUpdateManyInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MealListRelationFilter = {
@@ -320,6 +339,7 @@ export type MealCountOrderByAggregateInput = {
   date?: Prisma.SortOrder
   period?: Prisma.SortOrder
   cookedAt?: Prisma.SortOrder
+  note?: Prisma.SortOrder
 }
 
 export type MealMaxOrderByAggregateInput = {
@@ -328,6 +348,7 @@ export type MealMaxOrderByAggregateInput = {
   date?: Prisma.SortOrder
   period?: Prisma.SortOrder
   cookedAt?: Prisma.SortOrder
+  note?: Prisma.SortOrder
 }
 
 export type MealMinOrderByAggregateInput = {
@@ -336,6 +357,7 @@ export type MealMinOrderByAggregateInput = {
   date?: Prisma.SortOrder
   period?: Prisma.SortOrder
   cookedAt?: Prisma.SortOrder
+  note?: Prisma.SortOrder
 }
 
 export type MealScalarRelationFilter = {
@@ -426,6 +448,7 @@ export type MealCreateWithoutMealPlanInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   items?: Prisma.MealItemCreateNestedManyWithoutMealInput
   absences?: Prisma.MealAbsenceCreateNestedManyWithoutMealInput
 }
@@ -435,6 +458,7 @@ export type MealUncheckedCreateWithoutMealPlanInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   items?: Prisma.MealItemUncheckedCreateNestedManyWithoutMealInput
   absences?: Prisma.MealAbsenceUncheckedCreateNestedManyWithoutMealInput
 }
@@ -474,6 +498,7 @@ export type MealScalarWhereInput = {
   date?: Prisma.DateTimeFilter<"Meal"> | Date | string
   period?: Prisma.EnumMealPeriodFilter<"Meal"> | $Enums.MealPeriod
   cookedAt?: Prisma.DateTimeNullableFilter<"Meal"> | Date | string | null
+  note?: Prisma.StringNullableFilter<"Meal"> | string | null
 }
 
 export type MealCreateWithoutAbsencesInput = {
@@ -481,6 +506,7 @@ export type MealCreateWithoutAbsencesInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   mealPlan: Prisma.MealPlanCreateNestedOneWithoutMealsInput
   items?: Prisma.MealItemCreateNestedManyWithoutMealInput
 }
@@ -491,6 +517,7 @@ export type MealUncheckedCreateWithoutAbsencesInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   items?: Prisma.MealItemUncheckedCreateNestedManyWithoutMealInput
 }
 
@@ -515,6 +542,7 @@ export type MealUpdateWithoutAbsencesInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mealPlan?: Prisma.MealPlanUpdateOneRequiredWithoutMealsNestedInput
   items?: Prisma.MealItemUpdateManyWithoutMealNestedInput
 }
@@ -525,6 +553,7 @@ export type MealUncheckedUpdateWithoutAbsencesInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   items?: Prisma.MealItemUncheckedUpdateManyWithoutMealNestedInput
 }
 
@@ -533,6 +562,7 @@ export type MealCreateWithoutItemsInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   mealPlan: Prisma.MealPlanCreateNestedOneWithoutMealsInput
   absences?: Prisma.MealAbsenceCreateNestedManyWithoutMealInput
 }
@@ -543,6 +573,7 @@ export type MealUncheckedCreateWithoutItemsInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
   absences?: Prisma.MealAbsenceUncheckedCreateNestedManyWithoutMealInput
 }
 
@@ -567,6 +598,7 @@ export type MealUpdateWithoutItemsInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mealPlan?: Prisma.MealPlanUpdateOneRequiredWithoutMealsNestedInput
   absences?: Prisma.MealAbsenceUpdateManyWithoutMealNestedInput
 }
@@ -577,6 +609,7 @@ export type MealUncheckedUpdateWithoutItemsInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   absences?: Prisma.MealAbsenceUncheckedUpdateManyWithoutMealNestedInput
 }
 
@@ -585,6 +618,7 @@ export type MealCreateManyMealPlanInput = {
   date: Date | string
   period: $Enums.MealPeriod
   cookedAt?: Date | string | null
+  note?: string | null
 }
 
 export type MealUpdateWithoutMealPlanInput = {
@@ -592,6 +626,7 @@ export type MealUpdateWithoutMealPlanInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   items?: Prisma.MealItemUpdateManyWithoutMealNestedInput
   absences?: Prisma.MealAbsenceUpdateManyWithoutMealNestedInput
 }
@@ -601,6 +636,7 @@ export type MealUncheckedUpdateWithoutMealPlanInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   items?: Prisma.MealItemUncheckedUpdateManyWithoutMealNestedInput
   absences?: Prisma.MealAbsenceUncheckedUpdateManyWithoutMealNestedInput
 }
@@ -610,6 +646,7 @@ export type MealUncheckedUpdateManyWithoutMealPlanInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   period?: Prisma.EnumMealPeriodFieldUpdateOperationsInput | $Enums.MealPeriod
   cookedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -658,6 +695,7 @@ export type MealSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   date?: boolean
   period?: boolean
   cookedAt?: boolean
+  note?: boolean
   mealPlan?: boolean | Prisma.MealPlanDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Meal$itemsArgs<ExtArgs>
   absences?: boolean | Prisma.Meal$absencesArgs<ExtArgs>
@@ -670,6 +708,7 @@ export type MealSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   date?: boolean
   period?: boolean
   cookedAt?: boolean
+  note?: boolean
   mealPlan?: boolean | Prisma.MealPlanDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["meal"]>
 
@@ -679,6 +718,7 @@ export type MealSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   date?: boolean
   period?: boolean
   cookedAt?: boolean
+  note?: boolean
   mealPlan?: boolean | Prisma.MealPlanDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["meal"]>
 
@@ -688,9 +728,10 @@ export type MealSelectScalar = {
   date?: boolean
   period?: boolean
   cookedAt?: boolean
+  note?: boolean
 }
 
-export type MealOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mealPlanId" | "date" | "period" | "cookedAt", ExtArgs["result"]["meal"]>
+export type MealOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mealPlanId" | "date" | "period" | "cookedAt" | "note", ExtArgs["result"]["meal"]>
 export type MealInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   mealPlan?: boolean | Prisma.MealPlanDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Meal$itemsArgs<ExtArgs>
@@ -717,6 +758,10 @@ export type $MealPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     date: Date
     period: $Enums.MealPeriod
     cookedAt: Date | null
+    /**
+     * Ghi chú của cả nhà cho bữa này (vd: thiếu nước mắm) — hiện cả ở tab Đi chợ
+     */
+    note: string | null
   }, ExtArgs["result"]["meal"]>
   composites: {}
 }
@@ -1148,6 +1193,7 @@ export interface MealFieldRefs {
   readonly date: Prisma.FieldRef<"Meal", 'DateTime'>
   readonly period: Prisma.FieldRef<"Meal", 'MealPeriod'>
   readonly cookedAt: Prisma.FieldRef<"Meal", 'DateTime'>
+  readonly note: Prisma.FieldRef<"Meal", 'String'>
 }
     
 

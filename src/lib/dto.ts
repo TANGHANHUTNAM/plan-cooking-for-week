@@ -35,6 +35,8 @@ export interface MealDTO {
   dateISO: string;
   period: "LUNCH" | "DINNER";
   cookedAt: string | null;
+  /** ghi chú cho bữa (vd: thiếu nước mắm) — hiện cả ở tab Đi chợ */
+  note: string | null;
   items: MealItemDTO[];
   /** id thành viên KHÔNG ăn bữa này (mặc định ai cũng ăn) */
   absentUserIds: string[];
@@ -59,6 +61,7 @@ export function mapMeal(meal: WeekMeal): MealDTO {
     dateISO: dateToISO(meal.date),
     period: meal.period,
     cookedAt: meal.cookedAt ? meal.cookedAt.toISOString() : null,
+    note: meal.note,
     absentUserIds: meal.absences.map((a) => a.userId),
     items: meal.items.map((item) => ({
       id: item.id,

@@ -388,6 +388,32 @@ export async function suggestSideForMeal(
   return { suggestions: await topSuggestionDTOs(pool, ctx.used, ctx.sameDay) };
 }
 
+// file "use server" chỉ được export async function — hằng này ở lại đây,
+// UI (meal-card) dùng maxLength=300 khớp tay
+const MEAL_NOTE_MAX = 300;
+
+/** Lưu ghi chú cho một bữa (vd: thiếu nước mắm) — chuỗi rỗng = xóa ghi chú. */
+export async function setMealNote(
+  mealId: string,
+  note: string
+): Promise<PlanActionResult> {
+  await requireSession();
+  const trimmed = note.trim();
+  if (trimmed.length > MEAL_NOTE_MAX) {
+    return { error: `Ghi chú tối đa ${MEAL_NOTE_MAX} ký tự` };
+  }
+  try {
+    await prisma.meal.update({
+      where: { id: mealId },
+      data: { note: trimmed || null },
+    });
+  } catch {
+    return { error: "Không tìm thấy bữa ăn" };
+  }
+  revalidatePath("/", "layout");
+  return {};
+}
+
 /** Bật/tắt "không ăn" của một thành viên cho một bữa (có dòng = không ăn). */
 export async function toggleMealAbsence(
   mealId: string,

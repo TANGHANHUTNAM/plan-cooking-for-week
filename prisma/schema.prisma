@@ -71,6 +71,8 @@ model Meal {
   date       DateTime      @db.Date
   period     MealPeriod
   cookedAt   DateTime?
+  /// Ghi chú của cả nhà cho bữa này (vd: thiếu nước mắm) — hiện cả ở tab Đi chợ
+  note       String?
   mealPlan   MealPlan      @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
   items      MealItem[]
   absences   MealAbsence[]

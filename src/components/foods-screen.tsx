@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CookingPot, FileUp, Loader2, Plus, Search, Trash2 } from "lucide-react";
+import {
+  ArrowDownWideNarrow,
+  CookingPot,
+  FileUp,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { deleteFood } from "@/actions/foods";
 import type { FoodDTO } from "@/lib/dto";
@@ -9,6 +17,13 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,9 +47,17 @@ const FILTERS = [
 
 type Filter = (typeof FILTERS)[number][0];
 
+const SORTS = [
+  ["NAME", "Tên A→Z"],
+  ["RATING", "Rating cao nhất"],
+] as const;
+
+type Sort = (typeof SORTS)[number][0];
+
 export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("ALL");
+  const [sort, setSort] = useState<Sort>("NAME");
   const [drawer, setDrawer] = useState<{ open: boolean; food: FoodDTO | null }>({
     open: false,
     food: null,
@@ -65,6 +88,15 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
       f.cookingMethod.toLowerCase().includes(q)
     );
   });
+  // rating cao trước, đồng hạng thì theo tên; mặc định giữ thứ tự tên từ server
+  const sorted =
+    sort === "RATING"
+      ? [...filtered].sort(
+          (a, b) =>
+            b.favoriteScore - a.favoriteScore ||
+            a.name.localeCompare(b.name, "vi", { sensitivity: "base" })
+        )
+      : filtered;
 
   return (
     <div className="w-full lg:max-w-5xl">
@@ -127,32 +159,54 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
               />
             </div>
 
-            <div className="grid shrink-0 grid-cols-3 gap-1 rounded-full bg-muted p-1 md:inline-grid">
-              {FILTERS.map(([val, label]) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setFilter(val)}
-                  className={cn(
-                    "h-8 rounded-full px-3 text-[13px] font-semibold transition-colors md:px-4",
-                    filter === val
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground"
-                  )}
+            <div className="flex items-center gap-2">
+              <div className="grid flex-1 grid-cols-3 gap-1 rounded-full bg-muted p-1 md:inline-grid md:flex-none">
+                {FILTERS.map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFilter(val)}
+                    className={cn(
+                      "h-8 rounded-full px-3 text-[13px] font-semibold transition-colors md:px-4",
+                      filter === val
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <Select
+                value={sort}
+                onValueChange={(v) => setSort(v as Sort)}
+              >
+                <SelectTrigger
+                  aria-label="Sắp xếp món ăn"
+                  className="h-9 shrink-0 rounded-full border-border bg-card px-3 text-[13px] font-semibold text-muted-foreground"
                 >
-                  {label}
-                </button>
-              ))}
+                  <ArrowDownWideNarrow className="size-3.5" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORTS.map(([val, label]) => (
+                    <SelectItem key={val} value={val}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {filtered.length === 0 ? (
+          {sorted.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Không tìm thấy món nào phù hợp.
             </p>
           ) : (
             <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:grid md:grid-cols-2 md:gap-3 md:divide-y-0 md:overflow-visible md:rounded-none md:border-0 md:bg-transparent md:shadow-none xl:grid-cols-3">
-              {filtered.map((food) => (
+              {sorted.map((food) => (
                 <div
                   key={food.id}
                   className="flex items-center gap-1 pr-2 transition-colors hover:bg-muted/50 md:rounded-xl md:border md:border-border md:bg-card md:shadow-sm md:hover:border-primary/40 md:hover:bg-card"

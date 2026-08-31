@@ -20,6 +20,7 @@ function toShoppingMeals(plan: WeekPlan | null): ShoppingMeal[] {
   return (plan?.meals ?? []).map((meal) => ({
     dateISO: dateToISO(meal.date),
     period: meal.period,
+    note: meal.note,
     dishes: meal.items.map((item) => ({
       name: item.food.name,
       ingredients: item.food.ingredients.map((i) => i.name),

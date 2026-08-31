@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, Copy, Info, ShoppingBasket } from "lucide-react";
+import {
+  CalendarDays,
+  Copy,
+  Info,
+  ShoppingBasket,
+  StickyNote,
+} from "lucide-react";
 import { toast } from "sonner";
 import { aggregateIngredients, type ShoppingMeal } from "@/lib/shopping";
 import {
@@ -152,12 +158,16 @@ export function ShoppingScreen({
       meal,
       dishes: meal.dishes.filter((d) => d.ingredients.length > 0),
     }))
-    .filter((g) => g.dishes.length > 0);
+    // bữa có ghi chú vẫn hiện dù món không có nguyên liệu — kẻo sót "thiếu gia vị"
+    .filter((g) => g.dishes.length > 0 || g.meal.note);
 
   const onCopy = async () => {
     const lines: string[] = [`Đi chợ ${scopeLabel}:`];
     for (const { meal, dishes } of shoppableMeals) {
       lines.push("", `▸ ${mealTitle(meal)} (${formatDM(meal.dateISO)})`);
+      if (meal.note) {
+        lines.push(`⚠ Ghi chú: ${meal.note}`);
+      }
       for (const dish of dishes) {
         lines.push(`- ${dish.name}: ${dish.ingredients.join(", ")}`);
       }
@@ -255,6 +265,14 @@ export function ShoppingScreen({
                     {formatDM(meal.dateISO)}
                   </span>
                 </h3>
+                {meal.note ? (
+                  <p className="mb-2 flex items-start gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2 text-[13px] text-amber-800 dark:text-amber-200 md:max-w-xl">
+                    <StickyNote className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span className="min-w-0 whitespace-pre-wrap">
+                      {meal.note}
+                    </span>
+                  </p>
+                ) : null}
                 <div className="grid gap-3 md:grid-cols-2 md:items-start">
                   {dishes.map((dish) => (
                     <div

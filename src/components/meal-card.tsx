@@ -7,17 +7,24 @@ import {
   Loader2,
   MoonStar,
   Plus,
+  StickyNote,
   Sun,
   Undo2,
   UserX,
 } from "lucide-react";
 import { toast } from "sonner";
-import { markCooked, toggleMealAbsence, undoCooked } from "@/actions/plans";
+import {
+  markCooked,
+  setMealNote,
+  toggleMealAbsence,
+  undoCooked,
+} from "@/actions/plans";
 import type { FoodDTO, MealDTO, MealItemDTO, MemberDTO } from "@/lib/dto";
 import { APP_TZ } from "@/lib/week";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { SwapSheet } from "@/components/swap-sheet";
 
 const PERIOD_META = {
@@ -48,6 +55,7 @@ export function MealCard({
     position: "MAIN" | "SIDE";
     item: MealItemDTO | null;
   } | null>(null);
+  const [noteDraft, setNoteDraft] = useState<string | null>(null); // null = không sửa
   const [pending, startTransition] = useTransition();
 
   // đánh dấu ăn/không ăn đổi ngay trên UI, server xác nhận sau
@@ -91,6 +99,17 @@ export function MealCard({
       toggleAbsentOptimistic(userId);
       const res = await toggleMealAbsence(meal.id, userId);
       if (res.error) toast.error(res.error);
+    });
+
+  const saveNote = (value: string) =>
+    startTransition(async () => {
+      const res = await setMealNote(meal.id, value);
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(value.trim() ? "Đã lưu ghi chú" : "Đã xóa ghi chú");
+      setNoteDraft(null);
     });
 
   const swapButton = (item: MealItemDTO) => (
@@ -258,6 +277,80 @@ export function MealCard({
           </div>
         </div>
       ) : null}
+
+      <div className={variant === "full" ? "mt-3" : "mt-2"}>
+        {noteDraft !== null ? (
+          <div>
+            <Textarea
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              maxLength={300}
+              placeholder="Vd: thiếu nước mắm, nhớ mua thêm tiêu…"
+              autoFocus
+              className="min-h-14 bg-card text-sm"
+            />
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <Button
+                size="sm"
+                onClick={() => saveNote(noteDraft)}
+                disabled={pending}
+                className="h-7 px-3 text-xs font-semibold"
+              >
+                {pending ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                Lưu
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setNoteDraft(null)}
+                disabled={pending}
+                className="h-7 px-3 text-xs"
+              >
+                Hủy
+              </Button>
+              {meal.note ? (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => saveNote("")}
+                  className="ml-auto rounded-md text-xs font-medium text-destructive/80 transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Xóa ghi chú
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : meal.note ? (
+          <button
+            type="button"
+            onClick={() => setNoteDraft(meal.note ?? "")}
+            title="Bấm để sửa ghi chú"
+            className="flex w-full items-start gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2 text-left transition-colors hover:bg-amber-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <StickyNote className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span
+              className={cn(
+                "min-w-0 flex-1 whitespace-pre-wrap text-amber-800 dark:text-amber-200",
+                variant === "full" ? "text-[13px]" : "text-xs"
+              )}
+            >
+              {meal.note}
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setNoteDraft("")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md font-medium text-muted-foreground/80 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              variant === "full" ? "text-[13px]" : "text-xs"
+            )}
+          >
+            <StickyNote className={variant === "full" ? "size-3.5" : "size-3"} />
+            Thêm ghi chú
+          </button>
+        )}
+      </div>
 
       {variant === "full" ? (
         <div className="mt-4">
