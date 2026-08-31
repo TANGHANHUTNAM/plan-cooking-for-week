@@ -1,42 +1,42 @@
-# Cơm Nhà 🍲
+# PlanFoodInWeek 🍲
 
-Ứng dụng thực đơn tuần cho gia đình (tên dự án: PlanFoodInWeek) — *"Mở app nhanh, biết hôm nay ăn gì, ai ăn, cần chuẩn bị gì."*
+The PlanFoodInWeek weekly family meal-planning app — _"Open the app quickly, know what's for today, who is eating, and what needs to be prepared."_
 
-- **Hôm nay** — 2 bữa trưa/tối của ngày, nguyên liệu cần chuẩn bị, nút **Đã nấu** (hệ thống học thói quen ăn uống từ đây).
-- **Lịch tuần** — T2→CN, **Random tuần** thông minh (điểm = yêu thích + hay ăn + lâu chưa ăn + ngẫu nhiên, không lặp món trong tuần), **Copy tuần trước**, đổi từng món qua bottom sheet.
-- **Món ăn** — CRUD món chính/món phụ, nguyên liệu, chấm 0–5 sao.
-- **Đi chợ** — gom nguyên liệu cả tuần, gộp trùng, tick đã mua (lưu trên máy).
-- **Cài đặt** — tài khoản, thống kê, đăng xuất.
+- **Today** — 2 lunch/dinner meals for the day, ingredients to prepare, and the **"Đã nấu"** button (the system learns eating habits from this).
+- **Weekly calendar** — Monday→Sunday, smart **Randomize week** (score = favorites + frequency + time since last meal + randomness; no dish repeats during the week), **Copy previous week**, and swapping individual dishes through a bottom sheet.
+- **Foods** — CRUD for main/side dishes, ingredients, and 0–5-star ratings.
+- **Shopping** — collect ingredients for the week, merge duplicates, and tick off purchased items (stored locally).
+- **Settings** — account, statistics, and sign out.
 
-Chi tiết thiết kế: [docs/DESIGN.md](./docs/DESIGN.md) · Spec gốc: [docs/spec.md](./docs/spec.md)
+Design details: [docs/DESIGN.md](./docs/DESIGN.md) · [Original spec](./docs/spec.md)
 
 ## Stack
 
-Next.js 16 (App Router, Server Actions, proxy.ts) · React 19 · TypeScript · Tailwind CSS v4 + shadcn/ui · Prisma 7 (driver adapter `@prisma/adapter-pg`) · PostgreSQL trên Supabase · Auth tự viết (bcryptjs + JWT `jose`, cookie httpOnly 90 ngày tự gia hạn).
+Next.js 16 (App Router, Server Actions, proxy.ts) · React 19 · TypeScript · Tailwind CSS v4 + shadcn/ui · Prisma 7 (driver adapter `@prisma/adapter-pg`) · PostgreSQL on Supabase · Custom auth (bcryptjs + JWT via `jose`, httpOnly cookie renewed automatically for 90 days).
 
-**4 tài khoản thành viên gia đình** (seed sẵn, cùng mật khẩu `admin123123!`): `nam@gmail.com`, `khang@gmail.com`, `dat@gmail.com`, `bao@gmail.com` — không có đăng ký/quên mật khẩu, không phân quyền (tài khoản admin cũ `thucdon@gmail.com` đã gỡ theo yêu cầu). Cả nhà xem chung **một thực đơn tuần**; trên mỗi bữa có chip thành viên để đánh dấu **ai không ăn** (bảng `meal_absences`, mặc định ai cũng ăn). Xóa tài khoản trong **Cài đặt → Thành viên gia đình** (chặn xóa tài khoản cuối cùng; tự xóa mình thì bị đăng xuất).
+**Four family-member accounts** (pre-seeded, all using the same password `admin123123!`): `nam@gmail.com`, `khang@gmail.com`, `dat@gmail.com`, `bao@gmail.com` — no registration or password reset, and no access control (the old admin account `thucdon@gmail.com` was removed as requested). The whole family shares **one weekly meal plan**; each meal has a member chip to mark **who is not eating** (the `meal_absences` table, with everyone eating by default). Delete an account in **Settings → Family members** (deleting the last account is blocked; deleting your own account signs you out).
 
-## Chạy dự án
+## Run the project
 
 ```bash
-npm install            # tự chạy prisma generate (postinstall)
+npm install            # automatically runs prisma generate (postinstall)
 npm run dev            # http://localhost:3000
 ```
 
-`.env` cần 3 biến (xem `.env.example`): `DATABASE_URL` (Supabase pooler 6543), `DIRECT_URL` (cổng 5432 — dùng cho migrate/seed), `AUTH_SECRET` (chuỗi ngẫu nhiên ≥ 32 ký tự).
+`.env` requires 3 variables (see `.env.example`): `DATABASE_URL` (Supabase pooler, port 6543), `DIRECT_URL` (port 5432 — used for migrate/seed), and `AUTH_SECRET` (a random string ≥ 32 characters).
 
 ## Scripts
 
-| Lệnh | Việc |
-|---|---|
-| `npm run dev` / `build` / `start` | Dev server / build production / chạy production |
-| `npm test` | Unit test (vitest) cho random engine + xử lý tuần |
-| `npm run db:migrate` | `prisma migrate dev` (đi qua `DIRECT_URL`) |
-| `npm run db:seed` | Seed admin + 18 món mẫu (idempotent — chạy lại không tạo trùng) |
-| `npm run db:studio` | Prisma Studio xem dữ liệu |
+| Command                           | Task                                                                              |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| `npm run dev` / `build` / `start` | Dev server / production build / run in production                                 |
+| `npm test`                        | Unit tests (Vitest) for the random engine + week processing                       |
+| `npm run db:migrate`              | `prisma migrate dev` (via `DIRECT_URL`)                                           |
+| `npm run db:seed`                 | Seed admin + 18 sample dishes (idempotent — rerunning does not create duplicates) |
+| `npm run db:studio`               | Prisma Studio for viewing data                                                    |
 
-## Ghi chú kỹ thuật
+## Technical notes
 
-- Mọi phép tính "hôm nay/tuần này" quy về múi giờ `Asia/Ho_Chi_Minh` (`src/lib/week.ts`) — server chạy UTC vẫn đúng ngày.
-- Engine random là hàm thuần trong `src/lib/random-engine.ts`; khi pool ít món sẽ nới lỏng nhưng **không bao giờ lặp món trong cùng một ngày** và phân bố lần lặp đều.
-- Prisma 7: URL cấu hình ở `prisma.config.ts` (CLI dùng `DIRECT_URL`), runtime dùng adapter pg với `DATABASE_URL`.
+- All “today/this week” calculations use the `Asia/Ho_Chi_Minh` time zone (`src/lib/week.ts`) — the server can run in UTC and still resolve the correct local day.
+- The random engine is a pure function in `src/lib/random-engine.ts`; when the pool contains too few dishes it relaxes the constraints but **never repeats a dish on the same day** and distributes repeats evenly.
+- Prisma 7: the URL is configured in `prisma.config.ts` (the CLI uses `DIRECT_URL`), while runtime uses the pg adapter with `DATABASE_URL`.
