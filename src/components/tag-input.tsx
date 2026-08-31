@@ -70,7 +70,11 @@ export function TagInput({
           if (e.key === "Enter") {
             e.preventDefault();
             commit();
-          } else if (e.key === "Backspace" && draft === "" && value.length > 0) {
+          } else if (
+            e.key === "Backspace" &&
+            draft === "" &&
+            value.length > 0
+          ) {
             onChange(value.slice(0, -1));
           }
         }}

@@ -43,15 +43,20 @@ export async function parseImportExcel(
   const file = formData.get("file");
   if (!(file instanceof File)) return { error: "Chưa chọn file" };
   if (!file.name.toLowerCase().endsWith(".xlsx")) {
-    return { error: "Chỉ nhận file Excel .xlsx — tải file mẫu để đúng định dạng" };
+    return {
+      error: "Chỉ nhận file Excel .xlsx — tải file mẫu để đúng định dạng",
+    };
   }
-  if (file.size > 4 * 1024 * 1024) return { error: "File quá lớn (tối đa 4MB)" };
+  if (file.size > 4 * 1024 * 1024)
+    return { error: "File quá lớn (tối đa 4MB)" };
 
   const workbook = new Workbook();
   try {
     await workbook.xlsx.load(await file.arrayBuffer());
   } catch {
-    return { error: "Không đọc được file — có đúng là file Excel .xlsx không?" };
+    return {
+      error: "Không đọc được file — có đúng là file Excel .xlsx không?",
+    };
   }
 
   const sheet = workbook.getWorksheet("Món ăn") ?? workbook.worksheets[0];
@@ -126,7 +131,8 @@ export async function importFoods(
   const validated: ImportFoodData[] = [];
   for (const row of rows) {
     const parsed = foodSchema.safeParse({ ...row, note: row.note ?? "" });
-    if (!parsed.success) return { error: "Dữ liệu gửi lên không hợp lệ — chọn lại file nhé" };
+    if (!parsed.success)
+      return { error: "Dữ liệu gửi lên không hợp lệ — chọn lại file nhé" };
     const { note, ...rest } = parsed.data;
     validated.push({ ...rest, note: note || null });
   }

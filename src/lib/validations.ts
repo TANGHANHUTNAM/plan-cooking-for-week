@@ -25,7 +25,12 @@ export const foodSchema = z.object({
     .trim()
     .min(1, "Chọn cách chế biến")
     .max(50, "Cách chế biến quá dài"),
-  note: z.string().trim().max(500, "Ghi chú quá dài").optional().or(z.literal("")),
+  note: z
+    .string()
+    .trim()
+    .max(500, "Ghi chú quá dài")
+    .optional()
+    .or(z.literal("")),
   favoriteScore: z.coerce.number().int().min(0).max(5),
   ingredients: z
     .array(z.string().trim().min(1).max(60))

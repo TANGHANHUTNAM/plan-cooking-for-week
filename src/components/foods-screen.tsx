@@ -58,10 +58,12 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("ALL");
   const [sort, setSort] = useState<Sort>("NAME");
-  const [drawer, setDrawer] = useState<{ open: boolean; food: FoodDTO | null }>({
-    open: false,
-    food: null,
-  });
+  const [drawer, setDrawer] = useState<{ open: boolean; food: FoodDTO | null }>(
+    {
+      open: false,
+      food: null,
+    }
+  );
   const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FoodDTO | null>(null);
   const [deleting, startDeleting] = useTransition();
@@ -133,7 +135,10 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
           description="Thêm từng món, hoặc nhập nhanh cả danh sách từ file Excel."
           className="lg:max-w-xl"
         >
-          <Button onClick={openCreate} className="h-11 px-6 text-base font-semibold">
+          <Button
+            onClick={openCreate}
+            className="h-11 px-6 text-base font-semibold"
+          >
             <Plus className="size-5" />
             Thêm món đầu tiên
           </Button>
@@ -178,10 +183,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
                 ))}
               </div>
 
-              <Select
-                value={sort}
-                onValueChange={(v) => setSort(v as Sort)}
-              >
+              <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
                 <SelectTrigger
                   aria-label="Sắp xếp món ăn"
                   className="h-9 shrink-0 rounded-full border-border bg-card px-3 text-[13px] font-semibold text-muted-foreground"

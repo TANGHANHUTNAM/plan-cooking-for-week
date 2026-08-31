@@ -59,7 +59,9 @@ export default async function SettingsPage() {
           <div key={label}>
             <div className="flex items-center justify-between gap-3 py-3.5">
               <span className="text-sm text-muted-foreground">{label}</span>
-              <span className="text-sm font-semibold tabular-nums">{value}</span>
+              <span className="text-sm font-semibold tabular-nums">
+                {value}
+              </span>
             </div>
             {i < arr.length - 1 ? <Separator /> : null}
           </div>

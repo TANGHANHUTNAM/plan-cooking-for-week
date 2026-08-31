@@ -71,7 +71,10 @@ export async function updateFood(
 
   try {
     await prisma.$transaction([
-      prisma.food.update({ where: { id }, data: { ...data, note: note || null } }),
+      prisma.food.update({
+        where: { id },
+        data: { ...data, note: note || null },
+      }),
       prisma.ingredient.deleteMany({ where: { foodId: id } }),
       prisma.ingredient.createMany({
         data: ingredients.map((name) => ({ foodId: id, name })),

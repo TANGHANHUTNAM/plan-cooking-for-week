@@ -77,7 +77,9 @@ export async function GET() {
     "1. Điền món vào sheet “Món ăn”, mỗi dòng một món, bắt đầu từ dòng 2.",
     "2. Tên món (bắt buộc) — ví dụ: Thịt kho trứng.",
     "3. Loại (bắt buộc) — chọn Chính hoặc Phụ (món mặn ăn chính / canh, rau ăn kèm).",
-    "4. Cách chế biến — gợi ý: " + COOKING_METHODS.join(", ") + ". Bỏ trống sẽ thành “Khác”.",
+    "4. Cách chế biến — gợi ý: " +
+      COOKING_METHODS.join(", ") +
+      ". Bỏ trống sẽ thành “Khác”.",
     "5. Nguyên liệu — viết liền một ô, cách nhau bằng dấu phẩy. Ví dụ: Thịt ba rọi, Trứng vịt, Nước dừa.",
     "6. Yêu thích — số từ 0 đến 5 sao, bỏ trống là 0.",
     "7. Hai dòng ví dụ có sẵn: sửa lại hoặc xóa đi trước khi nhập.",

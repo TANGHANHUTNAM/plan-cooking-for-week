@@ -22,14 +22,21 @@ function food(partial: Partial<CandidateFood> & { id: string }): CandidateFood {
 }
 
 function pool(n: number, type: "MAIN" | "SIDE"): CandidateFood[] {
-  return Array.from({ length: n }, (_, i) => food({ id: `${type}-${i}`, type }));
+  return Array.from({ length: n }, (_, i) =>
+    food({ id: `${type}-${i}`, type })
+  );
 }
 
 describe("scoreFood", () => {
   it("món yêu thích 5 sao được cộng đủ 2.0 điểm", () => {
     const zeroRng = () => 0;
     const base = scoreFood(food({ id: "a" }), 10, NOW, zeroRng);
-    const fav = scoreFood(food({ id: "b", favoriteScore: 5 }), 10, NOW, zeroRng);
+    const fav = scoreFood(
+      food({ id: "b", favoriteScore: 5 }),
+      10,
+      NOW,
+      zeroRng
+    );
     expect(fav - base).toBeCloseTo(2.0, 5);
   });
 
@@ -139,7 +146,9 @@ describe("generateWeekAssignments", () => {
   });
 
   it("không có món chính nào thì trả mảng rỗng", () => {
-    expect(generateWeekAssignments([], pool(5, "SIDE"), { now: NOW })).toEqual([]);
+    expect(generateWeekAssignments([], pool(5, "SIDE"), { now: NOW })).toEqual(
+      []
+    );
   });
 
   it("không có món phụ nào vẫn tạo đủ 14 bữa chỉ có món chính", () => {

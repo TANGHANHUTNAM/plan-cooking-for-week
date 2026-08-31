@@ -41,12 +41,9 @@ describe("parseFoodType", () => {
 
 describe("splitIngredients", () => {
   it("tách theo phẩy / chấm phẩy / xuống dòng", () => {
-    expect(splitIngredients("Thịt heo, Trứng vịt ; Nước dừa\nHành tím")).toEqual([
-      "Thịt heo",
-      "Trứng vịt",
-      "Nước dừa",
-      "Hành tím",
-    ]);
+    expect(
+      splitIngredients("Thịt heo, Trứng vịt ; Nước dừa\nHành tím")
+    ).toEqual(["Thịt heo", "Trứng vịt", "Nước dừa", "Hành tím"]);
   });
 
   it("bỏ trùng không phân biệt hoa thường và bỏ phần rỗng", () => {

@@ -28,7 +28,10 @@ export function SideNav() {
         </span>
       </Link>
 
-      <nav aria-label="Điều hướng chính" className="mt-8 flex flex-1 flex-col gap-1">
+      <nav
+        aria-label="Điều hướng chính"
+        className="mt-8 flex flex-1 flex-col gap-1"
+      >
         {APP_TABS.map(({ href, label, icon: Icon }) => {
           const active = isTabActive(href, pathname);
           return (
