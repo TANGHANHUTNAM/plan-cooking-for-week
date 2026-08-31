@@ -30,7 +30,9 @@ export function EmptyState({
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      {children ? <div className="mt-2 flex flex-col gap-2">{children}</div> : null}
+      {children ? (
+        <div className="mt-2 flex flex-col gap-2">{children}</div>
+      ) : null}
     </div>
   );
 }

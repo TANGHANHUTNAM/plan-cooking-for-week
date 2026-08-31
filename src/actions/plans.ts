@@ -9,7 +9,12 @@ import {
   suggestFoods,
   type CandidateFood,
 } from "@/lib/random-engine";
-import { addDaysISO, dateToISO, isoToDate, normalizeWeekParam } from "@/lib/week";
+import {
+  addDaysISO,
+  dateToISO,
+  isoToDate,
+  normalizeWeekParam,
+} from "@/lib/week";
 
 export interface PlanActionResult {
   error?: string;
@@ -34,7 +39,9 @@ async function loadCandidates(): Promise<CandidateFood[]> {
 }
 
 /** Random toàn bộ tuần (ghi đè thực đơn hiện có của tuần đó). */
-export async function generateWeek(weekStart: string): Promise<PlanActionResult> {
+export async function generateWeek(
+  weekStart: string
+): Promise<PlanActionResult> {
   await requireSession();
   const ws = normalizeWeekParam(weekStart);
 
@@ -45,7 +52,9 @@ export async function generateWeek(weekStart: string): Promise<PlanActionResult>
     return { error: "Cần ít nhất 1 món chính để random thực đơn" };
   }
 
-  const assignments = generateWeekAssignments(mains, sides, { now: new Date() });
+  const assignments = generateWeekAssignments(mains, sides, {
+    now: new Date(),
+  });
 
   try {
     // gom thành ít round-trip nhất có thể — DB ở xa (Supabase) dễ vượt timeout transaction
@@ -99,7 +108,9 @@ export async function generateWeek(weekStart: string): Promise<PlanActionResult>
 }
 
 /** Copy nguyên thực đơn tuần trước sang tuần này (reset trạng thái đã nấu). */
-export async function copyLastWeek(weekStart: string): Promise<PlanActionResult> {
+export async function copyLastWeek(
+  weekStart: string
+): Promise<PlanActionResult> {
   await requireSession();
   const ws = normalizeWeekParam(weekStart);
   const prevWs = addDaysISO(ws, -7);
@@ -162,7 +173,11 @@ async function loadItemContext(mealItemId: string) {
   const item = await prisma.mealItem.findUnique({
     where: { id: mealItemId },
     include: {
-      meal: { include: { mealPlan: { include: { meals: { include: { items: true } } } } } },
+      meal: {
+        include: {
+          mealPlan: { include: { meals: { include: { items: true } } } },
+        },
+      },
     },
   });
   if (!item) return null;
@@ -321,7 +336,9 @@ async function loadSlotContext(mealId: string) {
 }
 
 /** Bỏ món phụ khỏi một bữa — bữa nào cũng phải còn món chính. */
-export async function removeSideDish(mealItemId: string): Promise<PlanActionResult> {
+export async function removeSideDish(
+  mealItemId: string
+): Promise<PlanActionResult> {
   await requireSession();
   const item = await prisma.mealItem.findUnique({
     where: { id: mealItemId },
@@ -361,7 +378,9 @@ export async function addSideDish(
       now: new Date(),
     });
     if (!picked) {
-      return { error: "Chưa có món phụ nào phù hợp — thêm món ở tab Món ăn nhé" };
+      return {
+        error: "Chưa có món phụ nào phù hợp — thêm món ở tab Món ăn nhé",
+      };
     }
     pickedId = picked.id;
   }

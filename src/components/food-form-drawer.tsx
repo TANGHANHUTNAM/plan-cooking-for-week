@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -130,7 +136,10 @@ function FoodForm({
 
       <div className="flex flex-col gap-1.5">
         <Label>Cách chế biến</Label>
-        <Select name="cookingMethod" defaultValue={food?.cookingMethod ?? "Kho"}>
+        <Select
+          name="cookingMethod"
+          defaultValue={food?.cookingMethod ?? "Kho"}
+        >
           <SelectTrigger className="h-11 w-full text-base">
             <SelectValue placeholder="Chọn cách chế biến" />
           </SelectTrigger>
@@ -207,7 +216,8 @@ function FoodForm({
               <AlertDialogHeader>
                 <AlertDialogTitle>Xóa “{food.name}”?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Món sẽ bị gỡ khỏi mọi lịch tuần đang có và không thể khôi phục.
+                  Món sẽ bị gỡ khỏi mọi lịch tuần đang có và không thể khôi
+                  phục.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

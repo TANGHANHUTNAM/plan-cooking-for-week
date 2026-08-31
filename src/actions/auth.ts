@@ -29,7 +29,8 @@ export async function login(
   const email = parsed.data.email.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email } });
   const ok =
-    user !== null && (await bcrypt.compare(parsed.data.password, user.passwordHash));
+    user !== null &&
+    (await bcrypt.compare(parsed.data.password, user.passwordHash));
 
   if (!ok || !user) {
     // làm chậm brute-force + không tiết lộ email có tồn tại hay không

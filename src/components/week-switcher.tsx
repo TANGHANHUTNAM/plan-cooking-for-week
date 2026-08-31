@@ -16,7 +16,9 @@ export function WeekSwitcher({
   const isCurrent = weekStart === currentWeek;
 
   return (
-    <div className={cn("mb-4 flex items-center justify-between gap-2", className)}>
+    <div
+      className={cn("mb-4 flex items-center justify-between gap-2", className)}
+    >
       <Link
         href={`${basePath}?w=${addDaysISO(weekStart, -7)}`}
         aria-label="Tuần trước"
@@ -26,7 +28,9 @@ export function WeekSwitcher({
       </Link>
 
       <div className="text-center leading-tight">
-        <p className="font-semibold tabular-nums">{weekRangeLabel(weekStart)}</p>
+        <p className="font-semibold tabular-nums">
+          {weekRangeLabel(weekStart)}
+        </p>
         {isCurrent ? (
           <p className="text-xs font-medium text-primary">Tuần này</p>
         ) : (

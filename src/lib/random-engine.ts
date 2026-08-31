@@ -43,11 +43,16 @@ export function scoreFood(
   const favorite = food.favoriteScore / 5;
 
   const frequency =
-    maxCooked > 0 ? Math.log(1 + food.totalCooked) / Math.log(1 + maxCooked) : 0;
+    maxCooked > 0
+      ? Math.log(1 + food.totalCooked) / Math.log(1 + maxCooked)
+      : 0;
 
   let staleness = 1; // chưa nấu bao giờ = "lâu nhất"
   if (food.lastCookedAt) {
-    const days = Math.max(0, (now.getTime() - food.lastCookedAt.getTime()) / DAY_MS);
+    const days = Math.max(
+      0,
+      (now.getTime() - food.lastCookedAt.getTime()) / DAY_MS
+    );
     staleness = Math.min(days, STALE_CAP_DAYS) / STALE_CAP_DAYS;
   }
 
@@ -80,7 +85,10 @@ export function suggestFoods(
  * rồi weighted-random theo điểm trong top đó.
  * Pool cạn (mọi món đều đã dùng) -> nới lỏng: cho phép lặp, ưu tiên món ít lặp.
  */
-export function pickFood(pool: CandidateFood[], ctx: PickContext): CandidateFood | null {
+export function pickFood(
+  pool: CandidateFood[],
+  ctx: PickContext
+): CandidateFood | null {
   if (pool.length === 0) return null;
   const rng = ctx.rng ?? Math.random;
 

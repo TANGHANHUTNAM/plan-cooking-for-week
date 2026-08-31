@@ -224,8 +224,8 @@ export function ShoppingScreen({
           {missingTomorrowLunch ? (
             <p className="mb-3 flex items-start gap-1.5 rounded-xl bg-secondary/60 px-3 py-2 text-xs text-secondary-foreground md:max-w-xl">
               <Info className="mt-0.5 size-3.5 shrink-0" />
-              Trưa mai chưa có trong thực đơn (tuần sau chưa tạo) — danh sách này
-              mới gồm đồ cho bữa tối nay.
+              Trưa mai chưa có trong thực đơn (tuần sau chưa tạo) — danh sách
+              này mới gồm đồ cho bữa tối nay.
             </p>
           ) : null}
 
@@ -250,7 +250,12 @@ export function ShoppingScreen({
                 />
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={onCopy} className="shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onCopy}
+              className="shrink-0"
+            >
               <Copy className="size-3.5" />
               Copy
             </Button>

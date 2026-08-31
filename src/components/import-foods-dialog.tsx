@@ -22,7 +22,8 @@ export function ImportFoodsDialog({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const validRows = rows?.filter((r) => r.status === "valid") ?? [];
-  const duplicateCount = rows?.filter((r) => r.status === "duplicate").length ?? 0;
+  const duplicateCount =
+    rows?.filter((r) => r.status === "duplicate").length ?? 0;
   const errorCount = rows?.filter((r) => r.status === "error").length ?? 0;
 
   const reset = () => {

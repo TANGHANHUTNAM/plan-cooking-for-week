@@ -141,12 +141,17 @@ export function MealCard({
         {cooked ? (
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
             <CheckCircle2 className="size-4" />
-            Đã nấu{variant === "full" && meal.cookedAt ? ` lúc ${cookedTime(meal.cookedAt)}` : ""}
+            Đã nấu
+            {variant === "full" && meal.cookedAt
+              ? ` lúc ${cookedTime(meal.cookedAt)}`
+              : ""}
           </span>
         ) : null}
       </div>
 
-      <div className={cn("flex flex-col", variant === "full" ? "gap-3" : "gap-2")}>
+      <div
+        className={cn("flex flex-col", variant === "full" ? "gap-3" : "gap-2")}
+      >
         {main ? (
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
@@ -346,7 +351,9 @@ export function MealCard({
               variant === "full" ? "text-[13px]" : "text-xs"
             )}
           >
-            <StickyNote className={variant === "full" ? "size-3.5" : "size-3"} />
+            <StickyNote
+              className={variant === "full" ? "size-3.5" : "size-3"}
+            />
             Thêm ghi chú
           </button>
         )}
