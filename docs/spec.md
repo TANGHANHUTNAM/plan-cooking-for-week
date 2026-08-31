@@ -1,222 +1,220 @@
 # Smart Weekly Meal Planner - Product Specification
 
-## 1. Tổng quan
+## 1. Overview
 
-## Mục tiêu sản phẩm
+## Product goals
 
-Smart Weekly Meal Planner là ứng dụng quản lý thực đơn gia đình theo
-tuần.
+Smart Weekly Meal Planner is an application for managing a family's weekly meal plan.
 
-Mục tiêu:
+Goals:
 
--   Giúp người dùng lên kế hoạch món ăn từ thứ 2 đến chủ nhật.
--   Mỗi ngày gồm 2 bữa: trưa và tối.
--   Mỗi bữa gồm:
-    -   1 món chính (mặn, kho, chiên, xào, nướng...)
-    -   1 món phụ (canh, rau, món xào...)
--   Random thực đơn dựa trên danh sách món người dùng tạo.
--   Học thói quen ăn uống để ưu tiên các món thường xuyên sử dụng.
+- Help users plan dishes from Monday through Sunday.
+- Each day has 2 meals: lunch and dinner.
+- Each meal includes:
+  - 1 main dish (savory, braised, fried, stir-fried, grilled...)
+  - 1 side dish (soup, vegetables, stir-fried dish...)
+- Randomize the meal plan from the list of dishes created by the user.
+- Learn eating habits to prioritize dishes that are used frequently.
 
-Ứng dụng tập trung vào việc: \> "Mở app nhanh, biết hôm nay ăn gì, cần
-chuẩn bị gì."
+The application focuses on: \> "Open the app quickly, know what's for today, and what needs to be prepared."
 
-Không quản lý công thức nấu ăn hoặc video hướng dẫn.
+It does not manage recipes or cooking-instruction videos.
 
-------------------------------------------------------------------------
+---
 
-# 2. Phạm vi MVP
+# 2. MVP Scope
 
-## Chức năng chính
+## Main features
 
-### 1. Quản lý món ăn
+### 1. Food management
 
-Người dùng có thể:
+Users can:
 
--   Thêm món ăn.
--   Sửa món ăn.
--   Xóa món ăn.
--   Đánh dấu yêu thích.
--   Ghi chú nguyên liệu cần chuẩn bị.
+- Add a dish.
+- Edit a dish.
+- Delete a dish.
+- Mark a dish as a favorite.
+- Record the ingredients that need to be prepared.
 
-Thông tin món:
+Dish information:
 
--   Tên món.
--   Loại món.
--   Phương pháp chế biến.
--   Nhóm món.
--   Danh sách nguyên liệu.
--   Ghi chú.
+- Dish name.
+- Dish type.
+- Cooking method.
+- Dish group.
+- Ingredient list.
+- Notes.
 
-Ví dụ:
+Example:
 
 Thịt kho trứng
 
-Loại: - Món chính
+Type: - Main dish
 
-Cách làm: - Kho
+Cooking method: - Kho
 
-Nguyên liệu: - Thịt heo - Trứng - Nước dừa
+Ingredients: - Thịt heo - Trứng - Nước dừa
 
-------------------------------------------------------------------------
+---
 
-# 3. Phân loại món ăn
+# 3. Dish categories
 
-## Nhóm món chính
+## Main-dish group
 
 MAIN
 
-Ví dụ:
+Examples:
 
--   Kho
--   Chiên
--   Xào
--   Nướng
--   Luộc
+- Kho
+- Chiên
+- Xào
+- Nướng
+- Luộc
 
-## Nhóm món phụ
+## Side-dish group
 
 SIDE
 
-Ví dụ:
+Examples:
 
--   Canh
--   Rau xào
--   Rau luộc
+- Canh
+- Rau xào
+- Rau luộc
 
-------------------------------------------------------------------------
+---
 
 # 4. Weekly Meal Planner
 
-## Cấu trúc
+## Structure
 
-Một tuần:
+A week:
 
-Thứ 2 -\> Chủ nhật
+Monday → Sunday
 
-Mỗi ngày:
+Each day:
 
--   Lunch
--   Dinner
+- Lunch
+- Dinner
 
-Mỗi bữa:
+Each meal:
 
--   Main dish
--   Side dish
+- Main dish
+- Side dish
 
-Ví dụ:
+Example:
 
-Thứ 2:
+Monday:
 
-Trưa: - Cá kho - Canh chua
+Lunch: - Cá kho - Canh chua
 
-Tối: - Gà chiên - Rau xào
+Dinner: - Gà chiên - Rau xào
 
-------------------------------------------------------------------------
+---
 
-# 5. Random thực đơn thông minh
+# 5. Smart meal-plan randomization
 
-## Không random thuần
+## Not pure randomization
 
-Hệ thống sử dụng điểm ưu tiên.
+The system uses priority scores.
 
-Công thức:
+Formula:
 
 Score =
 
 Favorite Score + Frequency Score + Last Cooked Score + Random Weight
 
-## Quy tắc
+## Rules
 
--   Không lặp cùng món trong tuần.
--   Ưu tiên món người dùng thường ăn.
--   Ưu tiên món lâu chưa xuất hiện.
--   Cho phép giới hạn số lần xuất hiện.
+- Do not repeat the same dish during the week.
+- Prioritize dishes the user eats frequently.
+- Prioritize dishes that have not appeared for a long time.
+- Allow a limit on the number of appearances.
 
-Ví dụ:
+Example:
 
 Thịt kho:
 
--   Đã ăn 30 lần.
--   Yêu thích 5 sao.
--   10 ngày chưa ăn.
+- Eaten 30 times.
+- Favorite rating: 5 stars.
+- Not eaten for 10 days.
 
-=\> Điểm cao.
+=\> High score.
 
-------------------------------------------------------------------------
+---
 
-# 6. Quản lý lịch sử món ăn
+# 6. Dish history management
 
-Sau khi hoàn thành bữa ăn:
+After completing a meal:
 
-Người dùng bấm:
+The user taps:
 
 "Đã nấu"
 
-Hệ thống cập nhật:
+The system updates:
 
--   Số lần món được sử dụng.
--   Lần cuối sử dụng.
--   Tần suất theo tuần.
+- The number of times the dish has been used.
+- The last time it was used.
+- Weekly frequency.
 
-Dữ liệu này phục vụ random thông minh.
+This data powers smart randomization.
 
-------------------------------------------------------------------------
+---
 
-# 7. Đổi món nhanh
+# 7. Quick dish swap
 
-Trong lịch tuần:
+In the weekly calendar:
 
-Người dùng có thể:
+Users can:
 
--   Đổi random món hiện tại.
--   Chọn món thủ công.
--   Thay món chính.
--   Thay món phụ.
+- Randomize the current dish again.
+- Choose a dish manually.
+- Replace the main dish.
+- Replace the side dish.
 
 UX:
 
-Bottom sheet mobile:
+Mobile bottom sheet:
 
-Đổi món:
+"Đổi món":
 
--   Gợi ý phù hợp.
--   Random lại.
--   Chọn từ danh sách.
+- Suitable suggestions.
+- Randomize again.
+- Choose from the list.
 
-------------------------------------------------------------------------
+---
 
-# 8. Copy tuần trước
+# 8. Copy previous week
 
-Tính năng giúp giảm thao tác.
+This feature reduces the amount of work.
 
 Flow:
 
-Tuần mới:
+New week:
 
-Copy tuần trước
+Copy previous week
 
-Sau đó chỉnh sửa một vài món.
+Then edit a few dishes.
 
-------------------------------------------------------------------------
+---
 
 # 9. Shopping Note (Optional)
 
-Không quản lý tồn kho.
+Inventory is not managed.
 
-Chỉ hỗ trợ:
+Only supports:
 
-Gom nguyên liệu từ thực đơn.
+Aggregate ingredients from the meal plan.
 
-Ví dụ:
+Example:
 
-Tuần này cần:
+This week needs:
 
--   Thịt heo
--   Cá
--   Rau cải
--   Trứng
+- Thịt heo
+- Cá
+- Rau cải
+- Trứng
 
-------------------------------------------------------------------------
+---
 
 # 10. Database Design
 
@@ -224,107 +222,107 @@ Tuần này cần:
 
 Fields:
 
--   id
--   name
--   email
--   created_at
+- id
+- name
+- email
+- created_at
 
 ## foods
 
-Lưu món ăn.
+Stores dishes.
 
 Fields:
 
--   id
--   name
--   type
--   cooking_method
--   note
--   favorite_score
--   created_at
+- id
+- name
+- type
+- cooking_method
+- note
+- favorite_score
+- created_at
 
 type:
 
--   MAIN
--   SIDE
+- MAIN
+- SIDE
 
 ## ingredients
 
-Nguyên liệu.
+Ingredients.
 
 Fields:
 
--   id
--   food_id
--   name
+- id
+- food_id
+- name
 
 ## meal_plans
 
-Một kế hoạch tuần.
+A weekly plan.
 
 Fields:
 
--   id
--   user_id
--   week_start
--   created_at
+- id
+- user_id
+- week_start
+- created_at
 
 ## meals
 
-Một bữa ăn.
+A meal.
 
 Fields:
 
--   id
--   meal_plan_id
--   date
--   period
+- id
+- meal_plan_id
+- date
+- period
 
 period:
 
--   LUNCH
--   DINNER
+- LUNCH
+- DINNER
 
 ## meal_items
 
-Món trong bữa.
+Dishes in a meal.
 
 Fields:
 
--   id
--   meal_id
--   food_id
--   position
+- id
+- meal_id
+- food_id
+- position
 
 position:
 
--   MAIN
--   SIDE
+- MAIN
+- SIDE
 
 ## food_statistics
 
-Thống kê món.
+Dish statistics.
 
 Fields:
 
--   id
--   food_id
--   total_cooked
--   last_cooked_at
--   weekly_count
+- id
+- food_id
+- total_cooked
+- last_cooked_at
+- weekly_count
 
-------------------------------------------------------------------------
+---
 
 # 11. Frontend Architecture
 
 Tech stack:
 
--   Next.js 15
--   TypeScript
--   Tailwind CSS
--   Shadcn UI
--   Prisma
--   PostgreSQL
+- Next.js 15
+- TypeScript
+- Tailwind CSS
+- Shadcn UI
+- Prisma
+- PostgreSQL
 
 ## UI Structure
 
@@ -332,18 +330,18 @@ Tech stack:
 
 /components
 
--   meal-calendar
--   food-management
--   random-picker
--   shopping-list
+- meal-calendar
+- food-management
+- random-picker
+- shopping-list
 
-------------------------------------------------------------------------
+---
 
 # 12. Mobile First UX
 
 ## Bottom Navigation
 
-5 tab:
+5 tabs:
 
 1.  Hôm nay
 2.  Lịch tuần
@@ -351,64 +349,64 @@ Tech stack:
 4.  Đi chợ
 5.  Cài đặt
 
-## Nguyên tắc UX
+## UX principles
 
--   Một tay thao tác.
--   Ít nhập liệu.
--   Button lớn.
--   Bottom sheet thay modal.
--   Không tạo dashboard phức tạp.
+- One-handed operation.
+- Minimal data entry.
+- Large buttons.
+- Bottom sheet instead of a modal.
+- Do not create a complex dashboard.
 
-------------------------------------------------------------------------
+---
 
-# 13. Roadmap phát triển
+# 13. Development roadmap
 
 ## Phase 1
 
 MVP:
 
--   CRUD món.
--   Lịch tuần.
--   Random món.
--   Đổi món.
--   Favorite.
--   Lịch sử sử dụng.
+- Dish CRUD.
+- Weekly calendar.
+- Dish randomization.
+- Dish swapping.
+- Favorites.
+- Usage history.
 
 ## Phase 2
 
--   Shopping note.
--   Preference gia đình.
--   Copy tuần.
--   Notification.
+- Shopping note.
+- Family preferences.
+- Copy week.
+- Notifications.
 
 ## Phase 3
 
 AI Meal Assistant:
 
-Ví dụ:
+Example:
 
 "Nhà còn thịt gà và rau cải"
 
-AI đề xuất:
+AI suggests:
 
--   Gà xào cải xanh.
--   Canh gà.
+- Gà xào cải xanh.
+- Canh gà.
 
-------------------------------------------------------------------------
+---
 
-# 14. Nguyên tắc phát triển
+# 14. Development principles
 
-Ưu tiên:
+Priorities:
 
--   Đơn giản.
--   Nhanh.
--   Mobile first.
--   Ít thao tác.
--   Dữ liệu càng dùng càng thông minh.
+- Simplicity.
+- Speed.
+- Mobile first.
+- Minimal interaction.
+- The more it is used, the smarter the data becomes.
 
-Không xây dựng:
+Do not build:
 
--   Công thức nấu ăn.
--   Video.
--   Mạng xã hội.
--   Marketplace.
+- Recipes.
+- Videos.
+- Social networks.
+- A marketplace.
