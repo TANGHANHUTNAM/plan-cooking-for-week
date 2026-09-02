@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Dices, Loader2 } from "lucide-react";
+import { Dices } from "lucide-react";
 import { toast } from "sonner";
 import { generateWeek } from "@/actions/plans";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,24 +44,21 @@ export function GenerateWeekButton({
     <>
       <Button
         variant={variant}
+        size="lg"
         className={className}
         disabled={pending}
         onClick={() => (hasPlan ? setConfirmOpen(true) : run())}
       >
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Dices className="size-4" />
-        )}
+        {pending ? <Spinner /> : <Dices />}
         {label}
       </Button>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] rounded-2xl sm:max-w-sm">
+        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] sm:max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Random lại cả tuần?</AlertDialogTitle>
             <AlertDialogDescription>
-              Toàn bộ thực đơn tuần này sẽ được thay mới, kể cả các bữa bạn đã
+              Toàn bộ thực đơn tuần này sẽ được thay mới, kể cả những bữa bạn đã
               chỉnh tay.
             </AlertDialogDescription>
           </AlertDialogHeader>

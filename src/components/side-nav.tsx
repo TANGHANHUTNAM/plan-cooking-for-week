@@ -6,32 +6,34 @@ import { CookingPot } from "lucide-react";
 import { APP_NAME, APP_TAGLINE, APP_VERSION } from "@/lib/app-info";
 import { APP_TABS, isTabActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 /** Sidebar điều hướng cho desktop (lg trở lên) — thay cho bottom nav. */
 export function SideNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card px-4 py-6 lg:flex">
+    <aside className="sticky top-0 hidden h-dvh w-[16.5rem] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-5 lg:flex">
       <Link
         href="/"
-        className="flex items-center gap-2.5 rounded-xl px-2 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="mx-1 flex items-center gap-3 rounded-lg px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
           <CookingPot className="size-5" strokeWidth={2.2} />
         </span>
         <span className="min-w-0 leading-tight">
-          <span className="block truncate font-bold">{APP_NAME}</span>
-          <span className="block text-[11px] text-muted-foreground">
+          <span className="font-heading block truncate text-[15px] font-bold tracking-[-0.01em]">
+            {APP_NAME}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground">
             {APP_TAGLINE}
           </span>
         </span>
       </Link>
 
-      <nav
-        aria-label="Điều hướng chính"
-        className="mt-8 flex flex-1 flex-col gap-1"
-      >
+      <Separator className="my-5" />
+
+      <nav aria-label="Điều hướng chính" className="flex flex-1 flex-col gap-1">
         {APP_TABS.map(({ href, label, icon: Icon }) => {
           const active = isTabActive(href, pathname);
           return (
@@ -40,21 +42,32 @@ export function SideNav() {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                 active
-                  ? "bg-secondary font-semibold text-primary"
+                  ? "bg-secondary font-semibold text-secondary-foreground"
                   : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <Icon className="size-5" strokeWidth={active ? 2.4 : 2} />
+              {/* vạch chỉ mục bên trái: cho biết tab đang mở mà không cần đổi cỡ chữ */}
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-primary transition-opacity",
+                  active ? "opacity-100" : "opacity-0"
+                )}
+              />
+              <Icon
+                className={cn("size-[18px]", active && "text-primary")}
+                strokeWidth={active ? 2.3 : 1.9}
+              />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      <p className="px-3 text-[11px] text-muted-foreground">
-        v{APP_VERSION} · dữ liệu trên Supabase
+      <p className="px-3 text-xs text-muted-foreground">
+        Phiên bản {APP_VERSION}
       </p>
     </aside>
   );

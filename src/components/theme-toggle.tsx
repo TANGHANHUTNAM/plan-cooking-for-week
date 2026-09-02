@@ -3,12 +3,12 @@
 import { useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const OPTIONS = [
   { value: "light", label: "Sáng", icon: Sun },
   { value: "dark", label: "Tối", icon: Moon },
-  { value: "system", label: "Hệ thống", icon: Monitor },
+  { value: "system", label: "Theo máy", icon: Monitor },
 ] as const;
 
 const emptySubscribe = () => () => {};
@@ -27,28 +27,26 @@ export function ThemeToggle() {
   const current = mounted ? (theme ?? "system") : "system";
 
   return (
-    <div
-      role="group"
+    <ToggleGroup
+      type="single"
+      value={current}
+      onValueChange={(v) => v && setTheme(v)}
+      variant="outline"
+      spacing={0}
       aria-label="Chế độ giao diện"
-      className="grid grid-cols-3 gap-1 rounded-full bg-muted p-1"
+      className="h-10 w-full"
     >
       {OPTIONS.map(({ value, label, icon: Icon }) => (
-        <button
+        <ToggleGroupItem
           key={value}
-          type="button"
-          onClick={() => setTheme(value)}
-          aria-pressed={current === value}
-          className={cn(
-            "flex h-9 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold transition-colors",
-            current === value
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
+          value={value}
+          size="lg"
+          className="h-10 flex-1 gap-1.5 px-3 text-[13px] font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"
         >
-          <Icon className="size-4" />
+          <Icon />
           {label}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }

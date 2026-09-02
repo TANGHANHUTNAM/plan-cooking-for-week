@@ -5,12 +5,34 @@ import { prisma } from "@/lib/prisma";
 import { getMembers } from "@/lib/queries";
 import { APP_NAME, APP_VERSION } from "@/lib/app-info";
 import { PageHeader } from "@/components/page-header";
-import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LogoutButton } from "@/components/logout-button";
 import { MembersCard } from "@/components/members-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = { title: "Cài đặt" };
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-md bg-muted/60 px-3 py-3 text-center">
+      <p className="font-heading text-2xl font-bold tabular-nums leading-none">
+        {value}
+      </p>
+      <p className="mt-1.5 text-xs leading-tight text-muted-foreground">
+        {label}
+      </p>
+    </div>
+  );
+}
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -23,56 +45,75 @@ export default async function SettingsPage() {
     getMembers(),
   ]);
   const totalCooked = cookedAgg._sum.totalCooked ?? 0;
-
-  const initial = (session.name || session.email).charAt(0).toUpperCase();
+  const displayName = session.name || "Admin";
 
   return (
-    <div className="w-full lg:max-w-md">
-      <PageHeader eyebrow="Tài khoản" title="Cài đặt" />
+    <div className="mx-auto w-full max-w-4xl">
+      <PageHeader
+        title="Cài đặt"
+        description="Tài khoản, giao diện và những người cùng ăn trong nhà."
+      />
 
-      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary text-lg font-bold text-primary">
-          {initial}
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardContent className="flex items-center gap-3">
+              <Avatar size="lg">
+                <AvatarFallback className="bg-secondary font-semibold text-primary">
+                  {displayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{displayName}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {session.email}
+                </p>
+              </div>
+              <Badge variant="secondary">Đang đăng nhập</Badge>
+            </CardContent>
+          </Card>
+
+          <MembersCard members={members} currentUserId={session.sub} />
         </div>
-        <div className="min-w-0">
-          <p className="truncate font-semibold">{session.name || "Admin"}</p>
-          <p className="truncate text-sm text-muted-foreground">
-            {session.email}
-          </p>
+
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Giao diện</CardTitle>
+              <CardDescription>
+                Chọn sáng, tối, hoặc đi theo cài đặt của máy.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ThemeToggle />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Nhà mình đã nấu tới đâu</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-3 gap-2">
+              <Stat value={String(foodCount)} label="món đã lưu" />
+              <Stat value={String(totalCooked)} label="lượt đã nấu" />
+              <Stat value={String(planCount)} label="tuần đã lên lịch" />
+            </CardContent>
+            <CardFooter className="border-t">
+              <p className="text-xs text-muted-foreground">
+                Phiên đăng nhập được lưu 90 ngày trên thiết bị này và tự gia hạn
+                mỗi lần bạn mở app.
+              </p>
+            </CardFooter>
+          </Card>
         </div>
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <p className="mb-3 text-sm font-semibold">Giao diện</p>
-        <ThemeToggle />
+      <div className="mt-4 flex flex-col items-center gap-4">
+        <LogoutButton />
+        <p className="text-xs text-muted-foreground">
+          {APP_NAME} phiên bản {APP_VERSION}
+        </p>
       </div>
-
-      <MembersCard members={members} currentUserId={session.sub} />
-
-      <div className="mb-4 rounded-2xl border border-border bg-card px-4 shadow-sm">
-        {[
-          ["Món đã lưu", `${foodCount} món`],
-          ["Tổng lượt đã nấu", `${totalCooked} lần`],
-          ["Tuần đã lên lịch", `${planCount} tuần`],
-          ["Phiên đăng nhập", "Lưu 90 ngày, tự gia hạn"],
-        ].map(([label, value], i, arr) => (
-          <div key={label}>
-            <div className="flex items-center justify-between gap-3 py-3.5">
-              <span className="text-sm text-muted-foreground">{label}</span>
-              <span className="text-sm font-semibold tabular-nums">
-                {value}
-              </span>
-            </div>
-            {i < arr.length - 1 ? <Separator /> : null}
-          </div>
-        ))}
-      </div>
-
-      <LogoutButton />
-
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        {APP_NAME} v{APP_VERSION} · Next.js 16 + Prisma + Supabase
-      </p>
     </div>
   );
 }

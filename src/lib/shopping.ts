@@ -2,6 +2,8 @@
 
 export interface ShoppingDish {
   name: string;
+  /** món chính hay món phụ — hiện thành biểu tượng trên thẻ đi chợ */
+  position: "MAIN" | "SIDE";
   ingredients: string[];
 }
 

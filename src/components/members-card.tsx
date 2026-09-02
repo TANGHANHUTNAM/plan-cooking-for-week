@@ -1,10 +1,34 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMember } from "@/actions/members";
 import type { Member } from "@/lib/queries";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,46 +65,58 @@ export function MembersCard({
   };
 
   return (
-    <div className="mb-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <p className="mb-1 text-sm font-semibold">
-        Thành viên gia đình · {members.length}
-      </p>
-      <p className="mb-3 text-xs text-muted-foreground">
-        Cùng xem một thực đơn chung — đánh dấu ai không ăn ngay trên từng bữa.
-      </p>
-
-      <div className="flex flex-col gap-2.5">
-        {members.map((member) => (
-          <div key={member.id} className="flex items-center gap-3">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-sm font-bold text-primary">
-              {member.name.charAt(0).toUpperCase()}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">
-                {member.name}
-                {member.id === currentUserId ? (
-                  <span className="ml-1.5 text-xs font-normal text-primary">
-                    (bạn)
-                  </span>
-                ) : null}
-              </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {member.email}
-              </span>
-            </span>
-            {members.length > 1 ? (
-              <button
-                type="button"
-                aria-label={`Xóa tài khoản ${member.name}`}
-                onClick={() => setDeleteTarget(member)}
-                className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Trash2 className="size-4" />
-              </button>
-            ) : null}
-          </div>
-        ))}
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Thành viên trong nhà</CardTitle>
+        <CardDescription>
+          Cả nhà xem chung một thực đơn. Ai không ăn bữa nào thì đánh dấu ngay
+          trên bữa đó.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ItemGroup className="gap-1">
+          {members.map((member) => (
+            <Item key={member.id} size="xs" className="px-0">
+              <ItemMedia>
+                <Avatar size="sm">
+                  <AvatarFallback className="bg-secondary text-xs font-semibold text-primary">
+                    {member.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>
+                  {member.name}
+                  {member.id === currentUserId ? (
+                    <span className="text-xs font-normal text-primary">
+                      (bạn)
+                    </span>
+                  ) : null}
+                </ItemTitle>
+                <ItemDescription>{member.email}</ItemDescription>
+              </ItemContent>
+              {members.length > 1 ? (
+                <ItemActions>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Xóa tài khoản ${member.name}`}
+                        onClick={() => setDeleteTarget(member)}
+                        className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Xóa tài khoản</TooltipContent>
+                  </Tooltip>
+                </ItemActions>
+              ) : null}
+            </Item>
+          ))}
+        </ItemGroup>
+      </CardContent>
 
       <AlertDialog
         open={deleteTarget !== null}
@@ -88,15 +124,15 @@ export function MembersCard({
           if (!open && !deleting) setDeleteTarget(null);
         }}
       >
-        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] rounded-2xl sm:max-w-sm">
+        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] sm:max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>
               Xóa tài khoản “{deleteTarget?.name}”?
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isSelf
-                ? "Đây là tài khoản bạn đang đăng nhập — xóa xong bạn sẽ bị đăng xuất ngay và không đăng nhập lại được bằng tài khoản này."
-                : `Tài khoản sẽ không đăng nhập được nữa và các đánh dấu ăn/không ăn của ${deleteTarget?.name ?? ""} bị xóa. Thực đơn và món ăn chung không bị ảnh hưởng.`}
+                ? "Đây là tài khoản bạn đang đăng nhập. Xóa xong bạn sẽ bị đăng xuất ngay và không đăng nhập lại được bằng tài khoản này."
+                : `Tài khoản sẽ không đăng nhập được nữa và các đánh dấu ăn hay vắng của ${deleteTarget?.name ?? ""} bị xóa theo. Thực đơn và món ăn chung không đổi.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -109,12 +145,12 @@ export function MembersCard({
               disabled={deleting}
               variant="destructive"
             >
-              {deleting ? <Loader2 className="size-4 animate-spin" /> : null}
+              {deleting ? <Spinner /> : null}
               {isSelf ? "Xóa và đăng xuất" : "Xóa tài khoản"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </Card>
   );
 }

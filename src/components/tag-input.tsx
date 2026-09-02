@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { appendUniqueTags } from "@/lib/tag-input";
+import { Badge } from "@/components/ui/badge";
 
-/** Nhập nguyên liệu dạng chip: Enter / dấu phẩy để tách, Backspace xóa chip cuối. */
+/** Nhập nguyên liệu dạng chip: Enter hoặc dấu phẩy để tách, Backspace xóa chip cuối. */
 export function TagInput({
+  id,
   name,
   value,
   onChange,
   placeholder,
 }: {
+  id?: string;
   name: string;
   value: string[];
   onChange: (value: string[]) => void;
@@ -21,32 +25,34 @@ export function TagInput({
     const parts = draft
       .split(",")
       .map((s) => s.trim())
-      .filter(Boolean)
-      .filter((s) => !value.some((v) => v.toLowerCase() === s.toLowerCase()));
-    if (parts.length > 0) onChange([...value, ...parts]);
+      .filter(Boolean);
+    const additions = appendUniqueTags(value, parts);
+    if (additions.length > 0) onChange([...value, ...additions]);
     setDraft("");
   };
 
   return (
-    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-xl border border-input bg-transparent px-2.5 py-2 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
+    <div className="flex min-h-11 w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-input/20 px-2 py-1.5 transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 dark:bg-input/30">
       {value.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex items-center gap-1 rounded-full bg-secondary py-0.5 pl-2.5 pr-1 text-xs font-medium text-secondary-foreground"
-        >
-          {tag}
+        <span key={tag} className="relative inline-flex h-6 shrink-0">
+          <Badge variant="secondary" className="h-6 pr-5 pl-2.5">
+            {tag}
+          </Badge>
           <button
             type="button"
-            aria-label={`Xóa ${tag}`}
+            aria-label={`Xóa nguyên liệu ${tag}`}
             onClick={() => onChange(value.filter((v) => v !== tag))}
-            className="grid size-4 place-items-center rounded-full transition-colors hover:bg-foreground/10"
+            className="group/tag-remove absolute top-1/2 right-[-0.5rem] z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring lg:right-0 lg:size-6"
           >
-            <X className="size-3" />
+            <span className="grid size-4 place-items-center rounded-full transition-colors group-hover/tag-remove:bg-foreground/10">
+              <X className="size-3" />
+            </span>
           </button>
           <input type="hidden" name={name} value={tag} />
         </span>
       ))}
       <input
+        id={id}
         value={draft}
         onChange={(e) => {
           const v = e.target.value;
@@ -57,12 +63,10 @@ export function TagInput({
           // gõ/paste có dấu phẩy: tách thành chip ngay, giữ phần dang dở
           const parts = v.split(",");
           const rest = parts.pop() ?? "";
-          const adds = parts
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .filter(
-              (s) => !value.some((t) => t.toLowerCase() === s.toLowerCase())
-            );
+          const adds = appendUniqueTags(
+            value,
+            parts.map((s) => s.trim()).filter(Boolean)
+          );
           if (adds.length > 0) onChange([...value, ...adds]);
           setDraft(rest);
         }}
@@ -80,7 +84,7 @@ export function TagInput({
         }}
         onBlur={commit}
         placeholder={value.length === 0 ? placeholder : ""}
-        className="min-w-28 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
+        className="min-w-28 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-muted-foreground md:text-sm"
       />
     </div>
   );

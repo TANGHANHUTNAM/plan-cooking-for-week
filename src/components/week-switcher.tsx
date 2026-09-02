@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { addDaysISO, todayISO, weekRangeLabel, weekStartISO } from "@/lib/week";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 
 export function WeekSwitcher({
   weekStart,
@@ -16,40 +19,53 @@ export function WeekSwitcher({
   const isCurrent = weekStart === currentWeek;
 
   return (
-    <div
-      className={cn("mb-4 flex items-center justify-between gap-2", className)}
-    >
-      <Link
-        href={`${basePath}?w=${addDaysISO(weekStart, -7)}`}
-        aria-label="Tuần trước"
-        className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronLeft className="size-5" />
-      </Link>
-
-      <div className="text-center leading-tight">
-        <p className="font-semibold tabular-nums">
-          {weekRangeLabel(weekStart)}
-        </p>
-        {isCurrent ? (
-          <p className="text-xs font-medium text-primary">Tuần này</p>
-        ) : (
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      <ButtonGroup className="h-11 lg:h-10">
+        <Button
+          variant="outline"
+          size="icon-lg"
+          asChild
+          className="size-11 lg:size-10"
+        >
           <Link
-            href={basePath}
-            className="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            href={`${basePath}?w=${addDaysISO(weekStart, -7)}`}
+            aria-label="Xem tuần trước"
           >
-            Về tuần này
+            <ChevronLeft className="size-4.5" />
           </Link>
-        )}
-      </div>
+        </Button>
+        <ButtonGroupText className="min-w-[10.5rem] justify-center bg-card px-4 text-sm font-semibold tabular-nums">
+          {weekRangeLabel(weekStart)}
+        </ButtonGroupText>
+        <Button
+          variant="outline"
+          size="icon-lg"
+          asChild
+          className="size-11 lg:size-10"
+        >
+          <Link
+            href={`${basePath}?w=${addDaysISO(weekStart, 7)}`}
+            aria-label="Xem tuần sau"
+          >
+            <ChevronRight className="size-4.5" />
+          </Link>
+        </Button>
+      </ButtonGroup>
 
-      <Link
-        href={`${basePath}?w=${addDaysISO(weekStart, 7)}`}
-        aria-label="Tuần sau"
-        className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronRight className="size-5" />
-      </Link>
+      {isCurrent ? (
+        <Badge variant="secondary" className="h-6 px-2.5 text-xs">
+          Tuần này
+        </Badge>
+      ) : (
+        <Button
+          variant="ghost"
+          size="lg"
+          asChild
+          className="h-11 text-xs lg:h-8"
+        >
+          <Link href={basePath}>Về tuần này</Link>
+        </Button>
+      )}
     </div>
   );
 }

@@ -5,18 +5,26 @@ import {
   ArrowDownWideNarrow,
   CookingPot,
   FileUp,
-  Loader2,
   Plus,
   Search,
+  SearchX,
+  Soup,
   Trash2,
+  UtensilsCrossed,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteFood } from "@/actions/foods";
 import type { FoodDTO } from "@/lib/dto";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -24,6 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,23 +51,127 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { FOOD_TYPE_META, FoodTypeTile } from "@/components/food-type";
+import { RatingStars } from "@/components/rating-stars";
 import { FoodFormDrawer } from "@/components/food-form-drawer";
 import { ImportFoodsDialog } from "@/components/import-foods-dialog";
 
 const FILTERS = [
-  ["ALL", "Tất cả"],
-  ["MAIN", "Món chính"],
-  ["SIDE", "Món phụ"],
+  ["ALL", "Tất cả", null],
+  ["MAIN", "Món chính", UtensilsCrossed],
+  ["SIDE", "Món phụ", Soup],
 ] as const;
 
 type Filter = (typeof FILTERS)[number][0];
 
 const SORTS = [
-  ["NAME", "Tên A→Z"],
-  ["RATING", "Rating cao nhất"],
+  ["NAME", "Theo tên"],
+  ["RATING", "Thích nhất"],
 ] as const;
 
 type Sort = (typeof SORTS)[number][0];
+
+function FoodCard({
+  food,
+  onEdit,
+  onDelete,
+}: {
+  food: FoodDTO;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Card
+      size="sm"
+      className="group relative h-full transition-colors hover:ring-primary/40"
+    >
+      {/* nút phủ toàn thẻ: bấm chỗ nào cũng mở form sửa món */}
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label={`Sửa món ${food.name}`}
+        className="absolute inset-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <CardContent className="pointer-events-none relative flex flex-1 flex-col gap-3">
+        <div className="flex items-start gap-3">
+          <FoodTypeTile
+            type={food.type}
+            className="size-9"
+            iconClassName="size-4.5"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold leading-snug">{food.name}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {food.cookingMethod}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-auto flex items-center justify-between gap-2">
+          <RatingStars value={food.favoriteScore} />
+          <div className="flex items-center gap-2">
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {food.totalCooked > 0
+                ? `Đã nấu ${food.totalCooked} lần`
+                : "Chưa nấu lần nào"}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Xóa món ${food.name}`}
+                  onClick={onDelete}
+                  className="pointer-events-auto -mr-1 size-11 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive lg:size-6"
+                >
+                  <Trash2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Xóa món</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FoodSection({
+  type,
+  foods,
+  onEdit,
+  onDelete,
+}: {
+  type: "MAIN" | "SIDE";
+  foods: FoodDTO[];
+  onEdit: (food: FoodDTO) => void;
+  onDelete: (food: FoodDTO) => void;
+}) {
+  if (foods.length === 0) return null;
+  return (
+    <section>
+      <div className="mb-3 flex items-center gap-2">
+        <FoodTypeTile type={type} className="size-7" iconClassName="size-4" />
+        <h2 className="font-heading text-base font-semibold tracking-[-0.01em]">
+          {FOOD_TYPE_META[type].label}
+        </h2>
+        <Badge variant="secondary" className="tabular-nums">
+          {foods.length}
+        </Badge>
+      </div>
+      <div className="grid auto-rows-fr items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {foods.map((food) => (
+          <FoodCard
+            key={food.id}
+            food={food}
+            onEdit={() => onEdit(food)}
+            onDelete={() => onDelete(food)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
   const [query, setQuery] = useState("");
@@ -69,6 +188,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
   const [deleting, startDeleting] = useTransition();
 
   const openCreate = () => setDrawer({ open: true, food: null });
+  const openEdit = (food: FoodDTO) => setDrawer({ open: true, food });
 
   const confirmDelete = () => {
     const target = deleteTarget;
@@ -100,162 +220,163 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
         )
       : filtered;
 
+  const mains = sorted.filter((f) => f.type === "MAIN");
+  const sides = sorted.filter((f) => f.type === "SIDE");
+
   return (
-    <div className="w-full lg:max-w-5xl">
+    <div className="mx-auto w-full max-w-6xl">
       <PageHeader
-        eyebrow={`${foods.length} món đã lưu`}
         title="Món ăn"
-        action={
-          <div className="flex items-center gap-2">
+        description={`${foods.length} món đã lưu. Càng nhiều món thì thực đơn random càng ít lặp lại.`}
+        actions={
+          <>
             <Button
               variant="outline"
+              size="lg"
               onClick={() => setImportOpen(true)}
-              className="h-9 px-3 text-[13px] font-semibold lg:h-10 lg:px-4 lg:text-sm"
+              className="h-11 lg:h-10"
             >
-              <FileUp className="size-4" />
+              <FileUp />
               Nhập Excel
             </Button>
             {foods.length > 0 ? (
               <Button
+                size="lg"
                 onClick={openCreate}
-                className="hidden h-10 px-4 font-semibold lg:inline-flex"
+                className="hidden h-10 font-semibold lg:inline-flex"
               >
-                <Plus className="size-4" />
+                <Plus />
                 Thêm món
               </Button>
             ) : null}
-          </div>
+          </>
         }
       />
 
       {foods.length === 0 ? (
         <EmptyState
-          icon={<CookingPot className="size-7" />}
+          icon={<CookingPot />}
           title="Chưa có món nào"
-          description="Thêm từng món, hoặc nhập nhanh cả danh sách từ file Excel."
-          className="lg:max-w-xl"
+          description="Thêm từng món một, hoặc nhập cả danh sách có sẵn từ file Excel."
         >
           <Button
+            size="lg"
             onClick={openCreate}
-            className="h-11 px-6 text-base font-semibold"
+            className="h-11 px-6 text-sm font-semibold"
           >
-            <Plus className="size-5" />
+            <Plus />
             Thêm món đầu tiên
           </Button>
           <Button
             variant="outline"
+            size="lg"
             onClick={() => setImportOpen(true)}
-            className="h-11 px-6 font-semibold"
+            className="h-11 px-6 text-sm font-semibold"
           >
-            <FileUp className="size-4" />
+            <FileUp />
             Nhập từ Excel
           </Button>
         </EmptyState>
       ) : (
         <>
-          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="relative flex-1 md:max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
+          <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+            <InputGroup className="h-11 min-w-44 flex-1 xl:h-10 xl:w-72 xl:flex-none">
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupInput
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Tìm món hoặc cách chế biến…"
-                className="h-11 bg-card pl-9 text-base"
+                placeholder="Tìm món hoặc cách chế biến"
+                aria-label="Tìm món ăn"
+                className="h-11 text-sm lg:h-10"
               />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="grid flex-1 grid-cols-3 gap-1 rounded-full bg-muted p-1 md:inline-grid md:flex-none">
-                {FILTERS.map(([val, label]) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setFilter(val)}
-                    className={cn(
-                      "h-8 rounded-full px-3 text-[13px] font-semibold transition-colors md:px-4",
-                      filter === val
-                        ? "bg-card text-foreground shadow-sm"
-                        : "text-muted-foreground"
-                    )}
+              {query ? (
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-xs"
+                    aria-label="Xóa từ khóa tìm"
+                    onClick={() => setQuery("")}
+                    className="size-11 lg:size-6"
                   >
-                    {label}
-                  </button>
-                ))}
-              </div>
+                    <X />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              ) : null}
+            </InputGroup>
 
-              <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-                <SelectTrigger
-                  aria-label="Sắp xếp món ăn"
-                  className="h-9 shrink-0 rounded-full border-border bg-card px-3 text-[13px] font-semibold text-muted-foreground"
+            <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
+              <SelectTrigger
+                size="lg"
+                aria-label="Sắp xếp món ăn"
+                className="h-11 w-[10.5rem] shrink-0 text-[13px] font-medium sm:order-3 lg:h-10"
+              >
+                <ArrowDownWideNarrow className="size-4 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORTS.map(([val, label]) => (
+                  <SelectItem key={val} value={val}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <ToggleGroup
+              type="single"
+              value={filter}
+              onValueChange={(v) => v && setFilter(v as Filter)}
+              variant="outline"
+              spacing={0}
+              className="h-11 sm:order-2 xl:ml-auto lg:h-10"
+            >
+              {FILTERS.map(([val, label, Icon]) => (
+                <ToggleGroupItem
+                  key={val}
+                  value={val}
+                  size="lg"
+                  className="h-11 gap-1.5 px-4 text-[13px] font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground lg:h-10"
                 >
-                  <ArrowDownWideNarrow className="size-3.5" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORTS.map(([val, label]) => (
-                    <SelectItem key={val} value={val}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  {Icon ? <Icon className="size-3.5" /> : null}
+                  {label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
 
           {sorted.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Không tìm thấy món nào phù hợp.
-            </p>
+            <EmptyState
+              icon={<SearchX />}
+              title="Không có món nào khớp"
+              description="Thử bỏ bớt từ khóa, hoặc chuyển bộ lọc về Tất cả."
+            >
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-11 lg:h-10"
+                onClick={() => {
+                  setQuery("");
+                  setFilter("ALL");
+                }}
+              >
+                Xóa bộ lọc
+              </Button>
+            </EmptyState>
           ) : (
-            <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:grid md:grid-cols-2 md:gap-3 md:divide-y-0 md:overflow-visible md:rounded-none md:border-0 md:bg-transparent md:shadow-none xl:grid-cols-3">
-              {sorted.map((food) => (
-                <div
-                  key={food.id}
-                  className="flex items-center gap-1 pr-2 transition-colors hover:bg-muted/50 md:rounded-xl md:border md:border-border md:bg-card md:shadow-sm md:hover:border-primary/40 md:hover:bg-card"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setDrawer({ open: true, food })}
-                    className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold">
-                        {food.name}
-                      </span>
-                      <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-                        <span>{food.cookingMethod}</span>
-                        {food.favoriteScore > 0 ? (
-                          <span className="font-medium text-amber-600 dark:text-amber-400">
-                            ★ {food.favoriteScore}
-                          </span>
-                        ) : null}
-                        {food.totalCooked > 0 ? (
-                          <span>· đã nấu {food.totalCooked} lần</span>
-                        ) : (
-                          <span>· chưa nấu lần nào</span>
-                        )}
-                      </span>
-                    </span>
-                    {filter === "ALL" ? (
-                      <Badge
-                        variant={food.type === "MAIN" ? "secondary" : "outline"}
-                        className="shrink-0 rounded-full text-[10.5px]"
-                      >
-                        {food.type === "MAIN" ? "Chính" : "Phụ"}
-                      </Badge>
-                    ) : null}
-                  </button>
-
-                  <button
-                    type="button"
-                    aria-label={`Xóa ${food.name}`}
-                    onClick={() => setDeleteTarget(food)}
-                    className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
-              ))}
+            <div className="flex flex-col gap-7">
+              <FoodSection
+                type="MAIN"
+                foods={mains}
+                onEdit={openEdit}
+                onDelete={setDeleteTarget}
+              />
+              <FoodSection
+                type="SIDE"
+                foods={sides}
+                onEdit={openEdit}
+                onDelete={setDeleteTarget}
+              />
             </div>
           )}
         </>
@@ -266,9 +387,9 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
           size="icon"
           aria-label="Thêm món mới"
           onClick={openCreate}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] right-[max(1rem,calc(50vw_-_13rem))] z-30 size-14 rounded-full shadow-lg lg:hidden"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] right-4 z-30 size-14 rounded-full shadow-lg [&_svg:not([class*='size-'])]:size-6 lg:hidden"
         >
-          <Plus className="size-6" />
+          <Plus />
         </Button>
       ) : null}
 
@@ -288,11 +409,12 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
           if (!open && !deleting) setDeleteTarget(null);
         }}
       >
-        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] rounded-2xl sm:max-w-sm">
+        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] sm:max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa “{deleteTarget?.name}”?</AlertDialogTitle>
             <AlertDialogDescription>
-              Món sẽ bị gỡ khỏi mọi lịch tuần đang có và không thể khôi phục.
+              Món sẽ bị gỡ khỏi mọi lịch tuần đang có và không khôi phục lại
+              được.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -305,7 +427,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
               disabled={deleting}
               variant="destructive"
             >
-              {deleting ? <Loader2 className="size-4 animate-spin" /> : null}
+              {deleting ? <Spinner /> : null}
               Xóa món
             </AlertDialogAction>
           </AlertDialogFooter>

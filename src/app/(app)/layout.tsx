@@ -5,14 +5,16 @@ export default function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <>
-      <div className="lg:flex">
-        <SideNav />
-        <main className="mx-auto w-full min-w-0 max-w-md flex-1 px-4 pb-28 pt-6 lg:max-w-none lg:px-10 lg:pb-16 lg:pt-8">
-          {children}
-        </main>
-      </div>
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden lg:min-h-dvh lg:h-auto lg:flex-row lg:overflow-visible">
+      <SideNav />
+      {/* Bề rộng nội dung do từng trang tự đặt (mx-auto max-w-*) để mỗi trang cân đối riêng */}
+      <main
+        id="app-main"
+        className="min-h-0 w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:overflow-visible lg:px-10 lg:pb-14 lg:pt-10"
+      >
+        {children}
+      </main>
       <BottomNav />
-    </>
+    </div>
   );
 }

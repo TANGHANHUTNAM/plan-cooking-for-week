@@ -7,15 +7,13 @@ import { mapFood, mapMeal, mapMember } from "@/lib/dto";
 import type { MealDTO } from "@/lib/dto";
 import {
   DAY_LABELS,
-  formatDM,
   normalizeWeekParam,
   todayISO,
   weekDaysISO,
 } from "@/lib/week";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
-import { MealCard } from "@/components/meal-card";
+import { DayCard } from "@/components/day-card";
 import { WeekSwitcher } from "@/components/week-switcher";
 import { GenerateWeekButton } from "@/components/generate-week-button";
 import { CopyLastWeekButton } from "@/components/copy-last-week-button";
@@ -52,73 +50,61 @@ export default async function WeekPage({
   }
 
   return (
-    <div className="w-full 2xl:max-w-[1700px]">
-      <PageHeader eyebrow="Thực đơn" title="Lịch tuần" />
+    <div className="mx-auto w-full max-w-[104rem]">
+      <PageHeader
+        title="Lịch tuần"
+        description="Bảy ngày, mỗi ngày một bữa trưa và một bữa tối. Bấm mũi tên đổi món bất kỳ."
+      />
 
-      <div className="md:mb-5 md:flex md:items-center md:justify-between md:gap-6">
-        <WeekSwitcher
-          weekStart={weekStart}
-          basePath="/week"
-          className="md:mb-0 md:w-72"
-        />
-        <div className="mb-5 flex gap-2 md:mb-0">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <WeekSwitcher weekStart={weekStart} basePath="/week" />
+        <div className="flex flex-1 gap-2 sm:flex-none">
           <GenerateWeekButton
             weekStart={weekStart}
             hasPlan={hasPlan}
-            className="h-10 flex-1 font-semibold md:flex-none md:px-5"
+            className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-10"
           />
           <CopyLastWeekButton
             weekStart={weekStart}
             hasPlan={hasPlan}
-            className="h-10 flex-1 font-semibold md:flex-none md:px-5"
+            className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-10"
           />
         </div>
       </div>
 
       {!hasPlan ? (
         <EmptyState
-          icon={<CalendarDays className="size-7" />}
+          icon={<CalendarDays />}
           title="Tuần này chưa có thực đơn"
-          description="Random mới hoàn toàn, hoặc copy từ tuần trước rồi chỉnh vài món."
-          className="md:max-w-xl"
-        />
+          description="Random một thực đơn mới, hoặc copy tuần trước rồi chỉnh vài món cho khác đi."
+        >
+          <GenerateWeekButton
+            weekStart={weekStart}
+            hasPlan={false}
+            label="Random thực đơn"
+            className="h-11 px-6 text-sm font-semibold"
+          />
+          <CopyLastWeekButton
+            weekStart={weekStart}
+            hasPlan={false}
+            className="h-11 px-6 text-sm font-semibold"
+          />
+        </EmptyState>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 md:gap-4 2xl:grid-cols-7 2xl:gap-3">
+        <div className="grid auto-rows-fr items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-7">
           {weekDaysISO(weekStart).map((dayISO, i) => {
             const dayMeals = mealsByDay.get(dayISO);
-            const isToday = dayISO === today;
             return (
-              <section key={dayISO} className="min-w-0">
-                <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <h2 className="font-bold">{DAY_LABELS[i]}</h2>
-                  <span className="text-sm tabular-nums text-muted-foreground">
-                    {formatDM(dayISO)}
-                  </span>
-                  {isToday ? (
-                    <Badge className="rounded-full px-2 py-0 text-[10.5px]">
-                      Hôm nay
-                    </Badge>
-                  ) : null}
-                </div>
-                <div className="flex flex-col gap-2">
-                  {dayMeals?.LUNCH ? (
-                    <MealCard
-                      meal={dayMeals.LUNCH}
-                      foods={foodDTOs}
-                      members={memberDTOs}
-                      variant="compact"
-                    />
-                  ) : null}
-                  {dayMeals?.DINNER ? (
-                    <MealCard
-                      meal={dayMeals.DINNER}
-                      foods={foodDTOs}
-                      members={memberDTOs}
-                      variant="compact"
-                    />
-                  ) : null}
-                </div>
-              </section>
+              <DayCard
+                key={dayISO}
+                weekdayLabel={DAY_LABELS[i]}
+                dayNumber={dayISO.slice(8, 10)}
+                isToday={dayISO === today}
+                lunch={dayMeals?.LUNCH}
+                dinner={dayMeals?.DINNER}
+                foods={foodDTOs}
+                members={memberDTOs}
+              />
             );
           })}
         </div>

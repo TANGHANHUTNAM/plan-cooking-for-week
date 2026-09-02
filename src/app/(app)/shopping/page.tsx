@@ -21,10 +21,16 @@ function toShoppingMeals(plan: WeekPlan | null): ShoppingMeal[] {
     dateISO: dateToISO(meal.date),
     period: meal.period,
     note: meal.note,
-    dishes: meal.items.map((item) => ({
-      name: item.food.name,
-      ingredients: item.food.ingredients.map((i) => i.name),
-    })),
+    // món chính trước, món phụ sau — cùng thứ tự với thẻ bữa ăn
+    dishes: meal.items
+      .map((item) => ({
+        name: item.food.name,
+        position: item.position,
+        ingredients: item.food.ingredients.map((i) => i.name),
+      }))
+      .sort((a, b) =>
+        a.position === b.position ? 0 : a.position === "MAIN" ? -1 : 1
+      ),
   }));
 }
 
@@ -54,12 +60,11 @@ export default async function ShoppingPage({
   const meals = [...toShoppingMeals(plan), ...toShoppingMeals(nextWeekPlan)];
 
   return (
-    <div className="w-full lg:max-w-4xl">
-      <PageHeader eyebrow="Cần mua gì" title="Đi chợ" />
-      <WeekSwitcher
-        weekStart={weekStart}
-        basePath="/shopping"
-        className="md:max-w-sm"
+    <div className="mx-auto w-full max-w-5xl">
+      <PageHeader
+        title="Đi chợ"
+        description="Nguyên liệu gom sẵn theo bữa. Tick từng món khi đã mua."
+        actions={<WeekSwitcher weekStart={weekStart} basePath="/shopping" />}
       />
       <ShoppingScreen
         meals={meals}

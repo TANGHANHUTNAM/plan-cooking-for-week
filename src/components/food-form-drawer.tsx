@@ -7,7 +7,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   createFood,
@@ -17,10 +17,15 @@ import {
 } from "@/actions/foods";
 import type { FoodDTO } from "@/lib/dto";
 import { COOKING_METHODS } from "@/lib/validations";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -29,6 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ResponsiveSheet } from "@/components/responsive-sheet";
 import {
   AlertDialog,
@@ -40,6 +47,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FOOD_TYPE_META, type FoodType } from "@/components/food-type";
 import { StarRating } from "@/components/star-rating";
 import { TagInput } from "@/components/tag-input";
 
@@ -54,7 +62,7 @@ function FoodForm({
     food ? updateFood : createFood,
     {}
   );
-  const [type, setType] = useState<"MAIN" | "SIDE">(food?.type ?? "MAIN");
+  const [type, setType] = useState<FoodType>(food?.type ?? "MAIN");
   const [ingredients, setIngredients] = useState<string[]>(
     food?.ingredients ?? []
   );
@@ -91,145 +99,165 @@ function FoodForm({
     });
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction}>
       {food ? <input type="hidden" name="id" value={food.id} /> : null}
       <input type="hidden" name="type" value={type} />
       <input type="hidden" name="favoriteScore" value={stars} />
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="food-name">Tên món</Label>
-        <Input
-          id="food-name"
-          name="name"
-          defaultValue={food?.name ?? ""}
-          placeholder="VD: Thịt kho trứng"
-          required
-          className="h-11 text-base"
-        />
-      </div>
+      <FieldGroup className="gap-4">
+        <Field>
+          <FieldLabel htmlFor="food-name" className="text-sm">
+            Tên món
+          </FieldLabel>
+          <Input
+            id="food-name"
+            name="name"
+            defaultValue={food?.name ?? ""}
+            placeholder="Ví dụ: Thịt kho trứng"
+            required
+            className="h-11 text-base md:text-sm"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1.5">
-        <Label>Loại món</Label>
-        <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
-          {(
-            [
-              ["MAIN", "Món chính"],
-              ["SIDE", "Món phụ"],
-            ] as const
-          ).map(([val, label]) => (
-            <button
-              key={val}
-              type="button"
-              onClick={() => setType(val)}
-              className={cn(
-                "h-9 rounded-full text-sm font-semibold transition-colors",
-                type === val
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label>Cách chế biến</Label>
-        <Select
-          name="cookingMethod"
-          defaultValue={food?.cookingMethod ?? "Kho"}
-        >
-          <SelectTrigger className="h-11 w-full text-base">
-            <SelectValue placeholder="Chọn cách chế biến" />
-          </SelectTrigger>
-          <SelectContent>
-            {methods.map((m) => (
-              <SelectItem key={m} value={m}>
-                {m}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label>Nguyên liệu cần chuẩn bị</Label>
-        <TagInput
-          name="ingredients"
-          value={ingredients}
-          onChange={setIngredients}
-          placeholder="VD: Thịt heo, trứng vịt…"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label>Mức yêu thích</Label>
-        <StarRating value={stars} onChange={setStars} />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="food-note">Ghi chú</Label>
-        <Textarea
-          id="food-note"
-          name="note"
-          defaultValue={food?.note ?? ""}
-          placeholder="VD: kho lửa nhỏ 45 phút…"
-          rows={2}
-          className="text-base"
-        />
-      </div>
-
-      {state.error ? (
-        <p role="alert" className="text-sm font-medium text-destructive">
-          {state.error}
-        </p>
-      ) : null}
-
-      <Button
-        type="submit"
-        disabled={pending || deleting}
-        className="h-11 w-full text-base font-semibold"
-      >
-        {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        {food ? "Lưu thay đổi" : "Thêm món"}
-      </Button>
-
-      {food ? (
-        <>
-          <button
-            type="button"
-            disabled={deleting || pending}
-            onClick={() => setConfirmDelete(true)}
-            className="mx-auto flex items-center gap-1.5 py-1 text-sm font-medium text-destructive transition-opacity hover:opacity-80 disabled:opacity-50"
+        <Field>
+          <FieldLabel className="text-sm">Loại món</FieldLabel>
+          <ToggleGroup
+            type="single"
+            value={type}
+            onValueChange={(v) => v && setType(v as FoodType)}
+            variant="outline"
+            spacing={0}
+            aria-label="Loại món"
+            className="h-11 w-full"
           >
-            {deleting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Trash2 className="size-4" />
-            )}
-            Xóa món này
-          </button>
+            {(Object.keys(FOOD_TYPE_META) as FoodType[]).map((val) => {
+              const { label, icon: Icon } = FOOD_TYPE_META[val];
+              return (
+                <ToggleGroupItem
+                  key={val}
+                  value={val}
+                  size="lg"
+                  className="h-11 flex-1 gap-2 px-3 text-sm font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </ToggleGroupItem>
+              );
+            })}
+          </ToggleGroup>
+          <FieldDescription>
+            Món chính là món mặn ăn với cơm, món phụ là canh hoặc rau.
+          </FieldDescription>
+        </Field>
 
-          <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-            <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] rounded-2xl sm:max-w-sm">
-              <AlertDialogHeader>
-                <AlertDialogTitle>Xóa “{food.name}”?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Món sẽ bị gỡ khỏi mọi lịch tuần đang có và không thể khôi
-                  phục.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete} variant="destructive">
-                  Xóa món
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      ) : null}
+        <Field>
+          <FieldLabel htmlFor="food-method" className="text-sm">
+            Cách chế biến
+          </FieldLabel>
+          <Select
+            name="cookingMethod"
+            defaultValue={food?.cookingMethod ?? "Kho"}
+          >
+            <SelectTrigger id="food-method" size="lg" className="h-11 w-full">
+              <SelectValue placeholder="Chọn cách chế biến" />
+            </SelectTrigger>
+            <SelectContent>
+              {methods.map((m) => (
+                <SelectItem key={m} value={m}>
+                  {m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldDescription>
+            Dùng để tránh random hai bữa liền cùng một kiểu nấu.
+          </FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="food-ingredients" className="text-sm">
+            Nguyên liệu cần mua
+          </FieldLabel>
+          <TagInput
+            id="food-ingredients"
+            name="ingredients"
+            value={ingredients}
+            onChange={setIngredients}
+            placeholder="Thịt heo, trứng vịt…"
+          />
+          <FieldDescription>
+            Gõ xong nhấn Enter hoặc dấu phẩy để tách từng nguyên liệu.
+          </FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel className="text-sm">Mức yêu thích</FieldLabel>
+          <StarRating value={stars} onChange={setStars} />
+          <FieldDescription>
+            Món điểm cao được random ra nhiều hơn.
+          </FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="food-note" className="text-sm">
+            Ghi chú
+          </FieldLabel>
+          <Textarea
+            id="food-note"
+            name="note"
+            defaultValue={food?.note ?? ""}
+            placeholder="Ví dụ: kho lửa nhỏ 45 phút"
+            rows={2}
+            className="text-base md:text-sm"
+          />
+        </Field>
+
+        {state.error ? <FieldError>{state.error}</FieldError> : null}
+
+        <Button
+          type="submit"
+          size="lg"
+          disabled={pending || deleting}
+          className="h-11 w-full text-sm font-semibold"
+        >
+          {pending ? <Spinner /> : null}
+          {food ? "Lưu thay đổi" : "Thêm món"}
+        </Button>
+
+        {food ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              disabled={deleting || pending}
+              onClick={() => setConfirmDelete(true)}
+              className="mx-auto h-11 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive lg:h-8"
+            >
+              {deleting ? <Spinner /> : <Trash2 />}
+              Xóa món này
+            </Button>
+
+            <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+              <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] sm:max-w-sm">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xóa “{food.name}”?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Món sẽ bị gỡ khỏi mọi lịch tuần đang có và không khôi phục
+                    lại được.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete} variant="destructive">
+                    Xóa món
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        ) : null}
+      </FieldGroup>
     </form>
   );
 }
@@ -248,6 +276,11 @@ export function FoodFormDrawer({
       open={open}
       onOpenChange={onOpenChange}
       title={food ? "Sửa món ăn" : "Thêm món mới"}
+      description={
+        food
+          ? "Sửa xong bấm Lưu thay đổi, lịch tuần sẽ cập nhật theo."
+          : "Món mới sẽ được đưa vào danh sách random ngay."
+      }
     >
       <FoodForm
         key={food?.id ?? "new"}

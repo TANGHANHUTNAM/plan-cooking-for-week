@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro } from "next/font/google";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app-info";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const beVietnam = Be_Vietnam_Pro({
@@ -31,8 +32,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f8f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#141a16" },
+    { media: "(prefers-color-scheme: light)", color: "#f9faf7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d1511" },
   ],
 };
 
@@ -49,7 +50,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
           <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>

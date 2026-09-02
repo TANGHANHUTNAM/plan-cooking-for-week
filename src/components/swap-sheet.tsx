@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { CircleSlash, Dices, Loader2, Search } from "lucide-react";
+import { CircleSlash, Dices, Search, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   addSideDish,
@@ -14,34 +14,65 @@ import {
 } from "@/actions/plans";
 import type { FoodDTO, MealItemDTO } from "@/lib/dto";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { FoodTypeTile } from "@/components/food-type";
+import { RatingStars } from "@/components/rating-stars";
 import { ResponsiveSheet } from "@/components/responsive-sheet";
 
-function FoodOptionRow({
+function cookedLabel(total: number): string {
+  return total > 0 ? `đã nấu ${total} lần` : "chưa nấu lần nào";
+}
+
+function FoodOption({
   name,
-  meta,
+  method,
+  detail,
+  score,
   onPick,
   disabled,
 }: {
   name: string;
-  meta: string;
+  method: string;
+  detail: string;
+  score: number;
   onPick: () => void;
   disabled: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onPick}
-      disabled={disabled}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card px-3.5 py-2.5 text-left transition-colors hover:border-primary/50 hover:bg-secondary/40 disabled:opacity-50"
-    >
-      <span className="min-w-0">
-        <span className="block truncate text-[15px] font-medium">{name}</span>
-        <span className="block text-xs text-muted-foreground">{meta}</span>
-      </span>
-      <span className="shrink-0 text-xs font-semibold text-primary">Chọn</span>
-    </button>
+    <Item asChild variant="outline" size="sm">
+      <button
+        type="button"
+        onClick={onPick}
+        disabled={disabled}
+        className="w-full text-left transition-colors hover:border-primary/50 hover:bg-secondary/40 disabled:pointer-events-none disabled:opacity-50"
+      >
+        <ItemContent>
+          <ItemTitle className="text-sm">{name}</ItemTitle>
+          <ItemDescription>
+            {method}, {detail}
+          </ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <RatingStars value={score} />
+        </ItemActions>
+      </button>
+    </Item>
   );
 }
 
@@ -124,20 +155,27 @@ export function SwapSheet({
       if (!item) return;
       const res = await removeSideDish(item.id);
       if (res.error) toast.error(res.error);
-      else done("Đã bỏ món phụ khỏi bữa này");
+      else done("Bữa này sẽ không có món phụ");
     });
 
   return (
     <ResponsiveSheet
       open={open}
       onOpenChange={onOpenChange}
+      icon={
+        <FoodTypeTile
+          type={position}
+          className="size-7"
+          iconClassName="size-4"
+        />
+      }
       title={isAddMode ? "Thêm món phụ" : `Đổi ${positionLabel}`}
       description={
         isAddMode ? (
-          "Bữa này đang không có món phụ."
+          "Bữa này đang chưa có món phụ."
         ) : (
           <>
-            Đang có:{" "}
+            Đang là{" "}
             <span className="font-medium text-foreground">
               {item.food.name}
             </span>
@@ -145,80 +183,95 @@ export function SwapSheet({
         )
       }
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         <Button
           onClick={onRandom}
           disabled={pending}
           variant="secondary"
-          className="h-11 w-full font-semibold"
+          size="lg"
+          className="h-11 w-full text-sm font-semibold"
         >
-          {pending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Dices className="size-4" />
-          )}
+          {pending ? <Spinner /> : <Dices />}
           {isAddMode ? "Random món phụ" : "Random món khác"}
         </Button>
 
         <section>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Gợi ý phù hợp
-          </p>
-          <div className="flex flex-col gap-2">
+          <h3 className="mb-2 text-sm font-semibold">Gợi ý hợp bữa này</h3>
+          <ItemGroup className="gap-2">
             {suggestions === null ? (
               <>
-                <Skeleton className="h-[58px] rounded-xl" />
-                <Skeleton className="h-[58px] rounded-xl" />
-                <Skeleton className="h-[58px] rounded-xl" />
+                <Skeleton className="h-[54px] rounded-md" />
+                <Skeleton className="h-[54px] rounded-md" />
+                <Skeleton className="h-[54px] rounded-md" />
               </>
             ) : suggestions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Chưa có gợi ý — thêm món mới ở tab Món ăn nhé.
+                Chưa gợi ý được món nào. Thêm món mới ở tab Món ăn trước nhé.
               </p>
             ) : (
               suggestions.map((s) => (
-                <FoodOptionRow
+                <FoodOption
                   key={s.id}
                   name={s.name}
-                  meta={`${s.cookingMethod} · ★ ${s.favoriteScore} · đã nấu ${s.totalCooked} lần`}
+                  method={s.cookingMethod}
+                  detail={cookedLabel(s.totalCooked)}
+                  score={s.favoriteScore}
                   onPick={() => onPick(s.id, s.name)}
                   disabled={pending}
                 />
               ))
             )}
-          </div>
+          </ItemGroup>
         </section>
 
         <section>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Chọn từ danh sách
-          </p>
-          <div className="relative mb-2">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
+          <h3 className="mb-2 text-sm font-semibold">Hoặc chọn từ danh sách</h3>
+          <InputGroup className="mb-2 h-10">
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+            <InputGroupInput
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm theo tên hoặc cách chế biến…"
-              className="h-10 pl-9 text-base"
+              placeholder="Tìm theo tên hoặc cách chế biến"
+              aria-label="Tìm món ăn"
+              className="h-10 text-base md:text-sm"
             />
-          </div>
-          <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pb-1">
-            {filtered.length === 0 ? (
-              <p className="py-2 text-sm text-muted-foreground">
-                Không tìm thấy món phù hợp.
-              </p>
-            ) : (
-              filtered.map((f) => (
-                <FoodOptionRow
-                  key={f.id}
-                  name={f.name}
-                  meta={`${f.cookingMethod}${f.favoriteScore > 0 ? ` · ★ ${f.favoriteScore}` : ""}`}
-                  onPick={() => onPick(f.id, f.name)}
-                  disabled={pending}
-                />
-              ))
-            )}
-          </div>
+            {query ? (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  size="icon-xs"
+                  aria-label="Xóa từ khóa tìm"
+                  onClick={() => setQuery("")}
+                >
+                  <X />
+                </InputGroupButton>
+              </InputGroupAddon>
+            ) : null}
+          </InputGroup>
+
+          {filtered.length === 0 ? (
+            <p className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
+              <SearchX className="size-4 shrink-0" />
+              Không có món nào khớp từ khóa này.
+            </p>
+          ) : (
+            <ScrollArea className="scrollbar-thin -mr-2 h-60 max-h-60 pr-2">
+              <ItemGroup className="gap-2">
+                {filtered.map((f) => (
+                  <FoodOption
+                    key={f.id}
+                    name={f.name}
+                    method={f.cookingMethod}
+                    detail={cookedLabel(f.totalCooked)}
+                    score={f.favoriteScore}
+                    onPick={() => onPick(f.id, f.name)}
+                    disabled={pending}
+                  />
+                ))}
+              </ItemGroup>
+            </ScrollArea>
+          )}
         </section>
 
         {item && position === "SIDE" ? (
@@ -226,13 +279,10 @@ export function SwapSheet({
             onClick={onRemoveSide}
             disabled={pending}
             variant="outline"
-            className="h-10 w-full font-medium text-muted-foreground"
+            size="lg"
+            className="h-10 w-full text-sm text-muted-foreground"
           >
-            {pending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <CircleSlash className="size-4" />
-            )}
+            {pending ? <Spinner /> : <CircleSlash />}
             Bữa này không ăn món phụ
           </Button>
         ) : null}

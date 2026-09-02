@@ -20,9 +20,16 @@ import {
   weekDaysISO,
 } from "@/lib/week";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EmptyState } from "@/components/empty-state";
+import { FoodTypeTile } from "@/components/food-type";
+import { SectionHeading } from "@/components/page-header";
 
 const WEEK_SCOPE = "WEEK";
 /** Kiểu đi chợ buổi chiều của nhà: mua cho bữa tối nay + bữa trưa ngày mai */
@@ -96,14 +103,13 @@ export function ShoppingScreen({
   if (meals.length === 0) {
     return (
       <EmptyState
-        icon={<ShoppingBasket className="size-7" />}
+        icon={<ShoppingBasket />}
         title="Chưa có gì để mua"
-        description="Tuần này chưa có thực đơn nên chưa gom được nguyên liệu."
-        className="md:max-w-xl"
+        description="Tuần này chưa có thực đơn nên chưa gom được nguyên liệu nào."
       >
-        <Button asChild variant="outline">
+        <Button variant="outline" size="lg" asChild className="h-11 lg:h-10">
           <Link href="/week">
-            <CalendarDays className="size-4" />
+            <CalendarDays />
             Mở lịch tuần
           </Link>
         </Button>
@@ -129,7 +135,7 @@ export function ShoppingScreen({
         PERIOD_ORDER[a.period] - PERIOD_ORDER[b.period]
     );
 
-  // "Tối nay · 30/08" / "Trưa mai · 31/08" / "Trưa Thứ 2 · 24/08"
+  // "Tối nay" / "Trưa mai" / "Trưa Thứ 2"
   const mealTitle = (m: ShoppingMeal) => {
     const period = PERIOD_LABEL[m.period];
     if (m.dateISO === today) return `${period} nay`;
@@ -142,7 +148,7 @@ export function ShoppingScreen({
 
   const scopeLabel =
     scope === EVENING_SCOPE
-      ? "tối nay + trưa mai"
+      ? "tối nay và trưa mai"
       : scope === WEEK_SCOPE
         ? "cả tuần"
         : scope === today
@@ -174,125 +180,152 @@ export function ShoppingScreen({
     }
     try {
       await navigator.clipboard.writeText(lines.join("\n"));
-      toast.success(`Đã copy danh sách ${scopeLabel}`);
+      toast.success(`Đã copy danh sách đi chợ ${scopeLabel}`);
     } catch {
-      toast.error("Không copy được — trình duyệt chặn clipboard");
+      toast.error("Trình duyệt chặn clipboard nên chưa copy được");
     }
   };
 
   return (
     <>
-      <div className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0 md:pb-0">
-        {isCurrentWeek ? (
-          <ScopeChip
-            active={scope === EVENING_SCOPE}
-            onClick={() => setScope(EVENING_SCOPE)}
-            chipRef={scope === EVENING_SCOPE ? activeChipRef : undefined}
-          >
-            Tối nay + trưa mai
-          </ScopeChip>
-        ) : null}
-        <ScopeChip
-          active={scope === WEEK_SCOPE}
-          onClick={() => setScope(WEEK_SCOPE)}
-          chipRef={scope === WEEK_SCOPE ? activeChipRef : undefined}
+      <div className="relative -mx-4 mb-4 sm:-mx-6 lg:mx-0">
+        <div
+          role="region"
+          aria-label="Phạm vi đi chợ — vuốt ngang để xem thêm"
+          className="no-scrollbar overflow-x-auto px-4 pr-10 sm:px-6 sm:pr-14 lg:px-0 lg:pr-0"
         >
-          Cả tuần
-        </ScopeChip>
-        {days.map((day, i) => (
-          <ScopeChip
-            key={day}
-            active={scope === day}
-            onClick={() => setScope(day)}
-            chipRef={scope === day ? activeChipRef : undefined}
+          <ToggleGroup
+            type="single"
+            value={scope}
+            onValueChange={(v) => v && setScope(v)}
+            variant="outline"
+            spacing={2}
+            aria-label="Phạm vi đi chợ"
+            className="h-11 w-max lg:h-9"
           >
-            {day === today ? "Hôm nay" : DAY_LABELS_SHORT[i]}
-          </ScopeChip>
-        ))}
+            {isCurrentWeek ? (
+              <ToggleGroupItem
+                value={EVENING_SCOPE}
+                ref={scope === EVENING_SCOPE ? activeChipRef : undefined}
+                className="h-11 rounded-full px-4 text-xs font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
+              >
+                Tối nay và trưa mai
+              </ToggleGroupItem>
+            ) : null}
+            <ToggleGroupItem
+              value={WEEK_SCOPE}
+              ref={scope === WEEK_SCOPE ? activeChipRef : undefined}
+              className="h-11 rounded-full px-4 text-xs font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
+            >
+              Cả tuần
+            </ToggleGroupItem>
+            {days.map((day, i) => (
+              <ToggleGroupItem
+                key={day}
+                value={day}
+                ref={scope === day ? activeChipRef : undefined}
+                className="h-11 rounded-full px-4 text-xs font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
+              >
+                {day === today ? "Hôm nay" : DAY_LABELS_SHORT[i]}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background via-background/90 to-transparent lg:hidden"
+        />
       </div>
 
       {shoppableMeals.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground md:max-w-xl">
-          {scope === EVENING_SCOPE
-            ? "Tối nay và trưa mai chưa có bữa nào trong thực đơn."
-            : scopedMeals.length === 0
-              ? "Ngày này chưa có bữa nào trong thực đơn."
-              : "Các món trong phạm vi này không có nguyên liệu cần mua."}
-        </p>
+        <EmptyState
+          icon={<ShoppingBasket />}
+          title="Không có gì phải mua"
+          description={
+            scope === EVENING_SCOPE
+              ? "Tối nay và trưa mai chưa có bữa nào trong thực đơn."
+              : scopedMeals.length === 0
+                ? "Ngày này chưa có bữa nào trong thực đơn."
+                : "Các món trong phạm vi này không cần mua nguyên liệu."
+          }
+        />
       ) : (
-        <>
+        <div className="flex flex-col gap-5">
           {missingTomorrowLunch ? (
-            <p className="mb-3 flex items-start gap-1.5 rounded-xl bg-secondary/60 px-3 py-2 text-xs text-secondary-foreground md:max-w-xl">
-              <Info className="mt-0.5 size-3.5 shrink-0" />
-              Trưa mai chưa có trong thực đơn (tuần sau chưa tạo) — danh sách
-              này mới gồm đồ cho bữa tối nay.
-            </p>
+            <Alert>
+              <Info />
+              <AlertDescription>
+                Trưa mai chưa có trong thực đơn vì tuần sau chưa được tạo. Danh
+                sách này mới gồm đồ cho bữa tối nay.
+              </AlertDescription>
+            </Alert>
           ) : null}
 
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1 md:max-w-sm">
-              <p className="mb-1.5 text-sm font-semibold tabular-nums">
-                Đã mua {done}/{entries.length}
-                <span className="ml-1.5 font-normal text-muted-foreground">
-                  · {scopeLabel}
-                </span>
-              </p>
-              <div
-                role="progressbar"
-                aria-valuenow={done}
-                aria-valuemin={0}
-                aria-valuemax={entries.length}
-                className="h-1.5 overflow-hidden rounded-full bg-muted"
-              >
-                <div
-                  className="h-full rounded-full bg-primary transition-[width] duration-300"
-                  style={{ width: `${(done / entries.length) * 100}%` }}
+          <Card size="sm">
+            <CardContent className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+              <div className="w-full min-w-[12rem] sm:w-80">
+                <p className="text-sm font-medium">
+                  Đã mua{" "}
+                  <span className="tabular-nums">
+                    {done}/{entries.length}
+                  </span>{" "}
+                  nguyên liệu
+                </p>
+                <Progress
+                  value={entries.length ? (done / entries.length) * 100 : 0}
+                  aria-label={`Đã mua ${done} trên ${entries.length} nguyên liệu`}
+                  className="mt-2 h-1.5"
                 />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Danh sách cho {scopeLabel}
+                </p>
               </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onCopy}
-              className="shrink-0"
-            >
-              <Copy className="size-3.5" />
-              Copy
-            </Button>
-          </div>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={onCopy}
+                className="h-11 shrink-0 lg:h-9"
+              >
+                <Copy />
+                Copy danh sách
+              </Button>
+            </CardContent>
+          </Card>
 
-          <div className="flex flex-col gap-5">
-            {shoppableMeals.map(({ meal, dishes }) => (
-              <section key={`${meal.dateISO}-${meal.period}`}>
-                <h3 className="mb-2 flex items-baseline gap-2">
-                  <span className="font-bold">{mealTitle(meal)}</span>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {formatDM(meal.dateISO)}
+          {shoppableMeals.map(({ meal, dishes }) => (
+            <section key={`${meal.dateISO}-${meal.period}`}>
+              <SectionHeading meta={formatDM(meal.dateISO)}>
+                {mealTitle(meal)}
+              </SectionHeading>
+
+              {meal.note ? (
+                <p className="mb-3 flex items-start gap-2 rounded-md bg-warm-surface px-3 py-2 text-[13px] text-warm-foreground">
+                  <StickyNote className="mt-px size-3.5 shrink-0 text-warm" />
+                  <span className="min-w-0 whitespace-pre-wrap">
+                    {meal.note}
                   </span>
-                </h3>
-                {meal.note ? (
-                  <p className="mb-2 flex items-start gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2 text-[13px] text-amber-800 dark:text-amber-200 md:max-w-xl">
-                    <StickyNote className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                    <span className="min-w-0 whitespace-pre-wrap">
-                      {meal.note}
-                    </span>
-                  </p>
-                ) : null}
-                <div className="grid gap-3 md:grid-cols-2 md:items-start">
-                  {dishes.map((dish) => (
-                    <div
-                      key={dish.name}
-                      className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-                    >
-                      <p className="border-b border-border bg-muted/50 px-3.5 py-2 text-[13px] font-semibold">
-                        {dish.name}
-                      </p>
-                      <div className="divide-y divide-border">
-                        {dish.ingredients.map((name) => (
-                          <label
-                            key={name}
-                            className="flex cursor-pointer items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-muted/40"
-                          >
+                </p>
+              ) : null}
+
+              <div className="grid auto-rows-fr items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {dishes.map((dish) => (
+                  <Card
+                    key={dish.name}
+                    size="sm"
+                    className="h-full gap-0 overflow-hidden py-0"
+                  >
+                    <p className="flex items-center gap-2 border-b bg-muted/50 px-3.5 py-2 text-[13px] font-semibold">
+                      <FoodTypeTile
+                        type={dish.position}
+                        className="size-6"
+                        iconClassName="size-3.5"
+                      />
+                      <span className="min-w-0 flex-1">{dish.name}</span>
+                    </p>
+                    <ul className="divide-y">
+                      {dish.ingredients.map((name) => (
+                        <li key={name}>
+                          <Label className="flex min-h-11 cursor-pointer items-center gap-2.5 px-3.5 py-2.5 font-normal transition-colors hover:bg-muted/40 lg:min-h-10">
                             <Checkbox
                               checked={isChecked(name)}
                               onCheckedChange={() => toggle(name)}
@@ -307,50 +340,22 @@ export function ShoppingScreen({
                             >
                               {name}
                             </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+                          </Label>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          ))}
 
-          <p className="mt-4 text-center text-xs text-muted-foreground md:text-left">
-            Nguyên liệu dùng chung giữa các món: tick một lần là gạch ở mọi chỗ.
-            Tick lưu trên máy này theo tuần.
+          <p className="text-xs text-muted-foreground">
+            Nguyên liệu dùng chung giữa các món chỉ cần tick một lần là gạch ở
+            mọi chỗ. Các dấu tick lưu trên máy này, theo từng tuần.
           </p>
-        </>
+        </div>
       )}
     </>
-  );
-}
-
-function ScopeChip({
-  active,
-  onClick,
-  children,
-  chipRef,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  chipRef?: React.Ref<HTMLButtonElement>;
-}) {
-  return (
-    <button
-      ref={chipRef}
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "h-8 shrink-0 rounded-full border px-3.5 text-[13px] font-semibold transition-colors",
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card text-muted-foreground hover:text-foreground"
-      )}
-    >
-      {children}
-    </button>
   );
 }

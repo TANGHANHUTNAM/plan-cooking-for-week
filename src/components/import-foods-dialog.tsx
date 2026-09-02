@@ -1,13 +1,37 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Download, FileUp, Loader2 } from "lucide-react";
+import { Download, FileUp } from "lucide-react";
 import { toast } from "sonner";
 import { importFoods, parseImportExcel } from "@/actions/import";
-import type { PreviewRow } from "@/lib/import-foods";
+import type { ImportFoodData, PreviewRow } from "@/lib/import-foods";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Spinner } from "@/components/ui/spinner";
+import { FoodTypeTile } from "@/components/food-type";
 import { ResponsiveSheet } from "@/components/responsive-sheet";
+
+/** "Kho, 4 nguyên liệu" — loại món đã có ô biểu tượng bên trái nên không nhắc lại. */
+function rowDetail(data: ImportFoodData) {
+  const parts = [data.cookingMethod];
+  if (data.ingredients.length > 0) {
+    parts.push(`${data.ingredients.length} nguyên liệu`);
+  }
+  if (data.favoriteScore > 0) {
+    parts.push(`${data.favoriteScore} sao`);
+  }
+  return parts.join(", ");
+}
 
 export function ImportFoodsDialog({
   open,
@@ -70,39 +94,54 @@ export function ImportFoodsDialog({
       open={open}
       onOpenChange={handleOpenChange}
       title="Nhập món từ Excel"
-      description="Điền món vào file mẫu rồi tải lên — xem trước trước khi nhập."
+      description="Điền món vào file mẫu rồi tải lên. Bạn xem trước rồi mới nhập."
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         {rows === null ? (
           <>
-            <ol className="list-decimal space-y-1.5 pl-5 text-sm text-muted-foreground">
-              <li>
-                Tải file mẫu về và điền món vào sheet{" "}
-                <span className="font-medium text-foreground">“Món ăn”</span>{" "}
-                (mỗi dòng một món).
-              </li>
-              <li>
-                Nguyên liệu viết chung một ô, cách nhau bằng{" "}
-                <span className="font-medium text-foreground">dấu phẩy</span>.
-              </li>
-              <li>Chọn file để xem trước — món trùng sẽ tự bỏ qua.</li>
+            <ol className="flex flex-col gap-2.5 text-sm text-muted-foreground">
+              {[
+                <>
+                  Tải file mẫu về, điền món vào sheet{" "}
+                  <span className="font-medium text-foreground">“Món ăn”</span>,
+                  mỗi dòng một món.
+                </>,
+                <>
+                  Nguyên liệu viết chung một ô, cách nhau bằng{" "}
+                  <span className="font-medium text-foreground">dấu phẩy</span>.
+                </>,
+                <>Chọn file để xem trước. Món đã có sẵn sẽ tự bỏ qua.</>,
+              ].map((text, i) => (
+                <li key={i} className="flex gap-2.5">
+                  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-bold tabular-nums text-secondary-foreground">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 pt-px">{text}</span>
+                </li>
+              ))}
             </ol>
 
             <div className="flex flex-col gap-2">
-              <Button asChild variant="outline" className="h-11 font-semibold">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="h-11 text-sm font-semibold"
+              >
                 <a href="/foods/template" download>
-                  <Download className="size-4" />
+                  <Download />
                   Tải file mẫu (.xlsx)
                 </a>
               </Button>
 
-              <Button asChild disabled={parsing} className="h-11 font-semibold">
+              <Button
+                asChild
+                size="lg"
+                disabled={parsing}
+                className="h-11 text-sm font-semibold"
+              >
                 <label className="cursor-pointer">
-                  {parsing ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <FileUp className="size-4" />
-                  )}
+                  {parsing ? <Spinner /> : <FileUp />}
                   {parsing ? "Đang đọc file…" : "Chọn file đã điền"}
                   <input
                     ref={fileInputRef}
@@ -118,77 +157,87 @@ export function ImportFoodsDialog({
           </>
         ) : (
           <>
-            <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
-              <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="secondary" className="h-6 px-2.5">
                 {validRows.length} món sẽ nhập
-              </span>
+              </Badge>
               {duplicateCount > 0 ? (
-                <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-                  {duplicateCount} trùng — bỏ qua
-                </span>
+                <Badge variant="outline" className="h-6 px-2.5">
+                  {duplicateCount} món đã có
+                </Badge>
               ) : null}
               {errorCount > 0 ? (
-                <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-destructive">
+                <Badge variant="destructive" className="h-6 px-2.5">
                   {errorCount} dòng lỗi
-                </span>
+                </Badge>
               ) : null}
             </div>
 
-            <div className="max-h-64 divide-y divide-border overflow-y-auto rounded-xl border border-border">
-              {rows.map((row) => (
-                <div
-                  key={row.rowNumber}
-                  className={cn(
-                    "px-3.5 py-2.5",
-                    row.status === "duplicate" && "opacity-60"
-                  )}
-                >
-                  {row.status === "error" ? (
-                    <p className="text-sm font-medium text-destructive">
-                      Dòng {row.rowNumber}
-                      {row.name ? ` — ${row.name}` : ""}: {row.message}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-[15px] font-medium">
-                        {row.data.name}
-                        {row.status === "duplicate" ? (
-                          <span className="ml-2 text-xs font-normal text-muted-foreground">
-                            đã có — bỏ qua
-                          </span>
-                        ) : null}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {row.data.type === "MAIN" ? "Món chính" : "Món phụ"} ·{" "}
-                        {row.data.cookingMethod}
-                        {row.data.ingredients.length > 0
-                          ? ` · ${row.data.ingredients.length} nguyên liệu`
-                          : ""}
-                        {row.data.favoriteScore > 0
-                          ? ` · ★ ${row.data.favoriteScore}`
-                          : ""}
-                      </p>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
+            <ScrollArea className="scrollbar-thin -mr-2 max-h-64 pr-2">
+              <ItemGroup className="gap-1.5">
+                {rows.map((row) => (
+                  <Item
+                    key={row.rowNumber}
+                    size="xs"
+                    variant="outline"
+                    className={cn(row.status === "duplicate" && "opacity-60")}
+                  >
+                    {row.status === "error" ? null : (
+                      <ItemMedia>
+                        <FoodTypeTile
+                          type={row.data.type}
+                          className="size-7"
+                          iconClassName="size-3.5"
+                        />
+                      </ItemMedia>
+                    )}
+                    <ItemContent>
+                      {row.status === "error" ? (
+                        <>
+                          <ItemTitle className="text-destructive">
+                            Dòng {row.rowNumber}
+                            {row.name ? ` — ${row.name}` : ""}
+                          </ItemTitle>
+                          <ItemDescription className="text-destructive/90">
+                            {row.message}
+                          </ItemDescription>
+                        </>
+                      ) : (
+                        <>
+                          <ItemTitle className="text-sm">
+                            {row.data.name}
+                          </ItemTitle>
+                          <ItemDescription>
+                            {rowDetail(row.data)}
+                          </ItemDescription>
+                        </>
+                      )}
+                    </ItemContent>
+                    {row.status === "duplicate" ? (
+                      <Badge variant="outline">Đã có</Badge>
+                    ) : null}
+                  </Item>
+                ))}
+              </ItemGroup>
+            </ScrollArea>
 
             <div className="flex gap-2">
               <Button
                 variant="outline"
+                size="lg"
                 onClick={reset}
                 disabled={importing}
-                className="h-11 flex-1 font-semibold"
+                className="h-11 flex-1 text-sm font-semibold"
               >
                 Chọn file khác
               </Button>
               <Button
+                size="lg"
                 onClick={handleImport}
                 disabled={importing || validRows.length === 0}
-                className="h-11 flex-1 font-semibold"
+                className="h-11 flex-1 text-sm font-semibold"
               >
-                {importing ? <Loader2 className="size-4 animate-spin" /> : null}
+                {importing ? <Spinner /> : null}
                 Nhập {validRows.length} món
               </Button>
             </div>

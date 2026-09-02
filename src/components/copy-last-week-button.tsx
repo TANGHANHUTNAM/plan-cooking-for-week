@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CopyCheck, Loader2 } from "lucide-react";
+import { CopyCheck } from "lucide-react";
 import { toast } from "sonner";
 import { copyLastWeek } from "@/actions/plans";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,20 +40,17 @@ export function CopyLastWeekButton({
     <>
       <Button
         variant="outline"
+        size="lg"
         className={className}
         disabled={pending}
         onClick={() => (hasPlan ? setConfirmOpen(true) : run())}
       >
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <CopyCheck className="size-4" />
-        )}
+        {pending ? <Spinner /> : <CopyCheck />}
         Copy tuần trước
       </Button>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] rounded-2xl sm:max-w-sm">
+        <AlertDialogContent className="max-w-[calc(100vw_-_2rem)] sm:max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Copy tuần trước?</AlertDialogTitle>
             <AlertDialogDescription>
