@@ -8,7 +8,7 @@ The PlanFoodInWeek weekly family meal-planning app — _"Open the app quickly, k
 - **Shopping** — collect ingredients for the week, merge duplicates, and tick off purchased items (stored locally).
 - **Settings** — account, statistics, and sign out.
 
-Design details: [docs/DESIGN.md](./docs/DESIGN.md) · [Original spec](./docs/spec.md)
+Documentation: [visual design standard](./docs/DESIGN.md) · [technical architecture](./docs/architecture.md) · [feature requirements](./docs/spec.md)
 
 ## Stack
 
