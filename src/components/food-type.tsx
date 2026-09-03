@@ -2,30 +2,30 @@ import { Soup, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Quy ước chung cho loại món trong toàn app:
- *   món chính (món mặn ăn với cơm) = dao dĩa bắt chéo, tông xanh, ô tô đặc
- *   món phụ   (canh hoặc rau)      = tô canh,           tông xám,  ô viền rỗng
- * Dùng ở tab Món ăn, thẻ bữa ăn, đi chợ, form thêm món và xem trước import
- * để người dùng chỉ phải học một lần.
+ * Shared food-type convention across the app:
+ *   main dish (savory food served with rice) = crossed fork and knife, green tone, solid tile
+ *   side dish (soup or vegetable)             = soup bowl, gray tone, outlined tile
+ * Used in Foods, meal cards, Shopping, food forms, and import previews
+ * so users only need to learn the convention once.
  */
 export const FOOD_TYPE_META = {
   MAIN: {
     label: "Món chính",
     icon: UtensilsCrossed,
-    tile: "bg-secondary text-primary",
+    tile: "border border-primary/10 bg-secondary text-primary",
     tone: "text-primary",
   },
   SIDE: {
     label: "Món phụ",
     icon: Soup,
-    tile: "border border-border bg-card text-muted-foreground",
+    tile: "border border-border bg-muted/30 text-muted-foreground",
     tone: "text-muted-foreground",
   },
 } as const;
 
 export type FoodType = keyof typeof FOOD_TYPE_META;
 
-/** Ô biểu tượng có nền — dùng khi món là một mục riêng (thẻ món, dòng import). */
+/** Icon tile with a background — used when the food is a standalone item (food card, import row). */
 export function FoodTypeTile({
   type,
   className,
@@ -50,7 +50,7 @@ export function FoodTypeTile({
   );
 }
 
-/** Biểu tượng trần — dùng trong dòng món của một bữa, nơi cần nhẹ nhàng hơn. */
+/** Bare icon — used in a meal row, where a lighter treatment is preferable. */
 export function FoodTypeIcon({
   type,
   className,

@@ -41,8 +41,8 @@ function isRestorableFocusTarget(
 }
 
 /**
- * Bottom sheet trên mobile/tablet, dialog giữa màn hình trên desktop.
- * Cùng một API cho SwapSheet và form món ăn.
+ * Bottom sheet on mobile/tablet, centered dialog on desktop.
+ * Shared API for SwapSheet and the food form.
  */
 export function ResponsiveSheet({
   open,
@@ -66,7 +66,7 @@ export function ResponsiveSheet({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="flex max-h-[86dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
+          className="flex max-h-[86dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl"
           {...(description ? {} : { "aria-describedby": undefined })}
         >
           <DialogHeader className="shrink-0 border-b border-border px-6 py-4 text-left">

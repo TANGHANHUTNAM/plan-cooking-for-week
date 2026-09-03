@@ -8,8 +8,8 @@ export const metadata: Metadata = { title: "Đăng nhập" };
 
 export default function LoginPage() {
   return (
-    <main className="relative flex min-h-dvh flex-col justify-center overflow-hidden px-5 py-12">
-      {/* một vệt sáng xanh rau sau logo — điểm nhấn duy nhất của trang */}
+    <main className="relative flex min-h-dvh flex-col justify-center overflow-hidden bg-background px-5 py-12">
+      {/* A soft green glow behind the logo — the page's only accent. */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/2 size-[34rem] -translate-x-1/2 -translate-y-[65%] rounded-full bg-[radial-gradient(circle,var(--primary),transparent_65%)] opacity-[0.10]"
@@ -17,7 +17,7 @@ export default function LoginPage() {
 
       <div className="relative mx-auto w-full max-w-sm">
         <div className="mb-7 flex flex-col items-center gap-4 text-center">
-          <span className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+          <span className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground ring-4 ring-primary/10">
             <CookingPot className="size-7" strokeWidth={2.2} />
           </span>
           <div>
@@ -28,7 +28,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Card className="[--card-spacing:--spacing(6)]">
+        <Card className="[--card-spacing:--spacing(6)] ring-primary/10">
           <CardContent>
             <LoginForm />
           </CardContent>

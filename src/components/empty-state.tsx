@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/empty";
 
 /**
- * Trạng thái rỗng dựng trên <Empty> của shadcn, bọc trong Card để có mặt phẳng
- * giống mọi khối khác. `description` luôn nói bước tiếp theo, không chỉ báo trống.
+ * Empty state built on shadcn's <Empty>, wrapped in a Card to share the same
+ * surface as other sections. `description` always explains the next step, not just the empty state.
  */
 export function EmptyState({
   icon,
@@ -28,7 +28,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <Card className={cn("border-0 py-0", className)}>
+    <Card className={cn("border-0 py-0 ring-border/70", className)}>
       <Empty className="px-6 py-14">
         <EmptyHeader className="max-w-md">
           <EmptyMedia

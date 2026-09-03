@@ -1,4 +1,4 @@
-/** Danh tính app — đổi tên ở một chỗ duy nhất. */
+/** App identity — rename it in one place. */
 export const APP_NAME = "Cơm Nhà";
 export const APP_TAGLINE = "Thực đơn tuần cho gia đình";
 export const APP_DESCRIPTION =

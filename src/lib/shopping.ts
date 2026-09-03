@@ -1,8 +1,8 @@
-// Gom nguyên liệu đi chợ — hàm thuần, dùng được cả server lẫn client.
+// Aggregate shopping ingredients — a pure function shared by server and client.
 
 export interface ShoppingDish {
   name: string;
-  /** món chính hay món phụ — hiện thành biểu tượng trên thẻ đi chợ */
+  /** Main or side dish — shown as an icon on the shopping card. */
   position: "MAIN" | "SIDE";
   ingredients: string[];
 }
@@ -10,14 +10,14 @@ export interface ShoppingDish {
 export interface ShoppingMeal {
   dateISO: string;
   period: "LUNCH" | "DINNER";
-  /** ghi chú của bữa (vd: thiếu nước mắm) — hiện kèm khi đi chợ */
+  /** Meal note (e.g. missing fish sauce) — also shown in Shopping. */
   note?: string | null;
   dishes: ShoppingDish[];
 }
 
 export interface ShoppingEntry {
   name: string;
-  /** tên các món cần nguyên liệu này */
+  /** Names of foods that use this ingredient. */
   dishes: string[];
   count: number;
 }
@@ -29,12 +29,12 @@ export interface ShoppingExtra {
   purchased: boolean;
 }
 
-/** Khóa bền vững cho nguyên liệu: giữ dấu, bỏ khoảng trắng đầu/cuối và không phân biệt hoa thường. */
+/** Stable ingredient key: preserve accents, trim whitespace, and ignore case. */
 export function normalizeIngredientKey(name: string): string {
   return name.normalize("NFC").trim().toLocaleLowerCase("vi-VN");
 }
 
-/** Gộp nguyên liệu của các bữa đã cho, trùng tên (không phân biệt hoa thường) thì cộng dồn. */
+/** Merge ingredients from selected meals; add counts for duplicate names, ignoring case. */
 export function aggregateIngredients(meals: ShoppingMeal[]): ShoppingEntry[] {
   const map = new Map<string, ShoppingEntry>();
   for (const meal of meals) {

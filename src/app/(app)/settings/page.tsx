@@ -23,7 +23,7 @@ export const metadata: Metadata = { title: "Cài đặt" };
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-md bg-muted/60 px-3 py-3 text-center">
+    <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-3.5 text-center">
       <p className="font-heading text-2xl font-bold tabular-nums leading-none">
         {value}
       </p>
@@ -56,7 +56,7 @@ export default async function SettingsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <div className="flex flex-col gap-4">
-          <Card>
+          <Card className="ring-primary/10">
             <CardContent className="flex items-center gap-3">
               <Avatar size="lg">
                 <AvatarFallback className="bg-secondary font-semibold text-primary">
@@ -89,7 +89,7 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-primary/60">
             <CardHeader>
               <CardTitle>Nhà mình đã nấu tới đâu</CardTitle>
             </CardHeader>

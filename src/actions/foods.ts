@@ -7,7 +7,7 @@ import { foodSchema } from "@/lib/validations";
 
 export interface FoodFormState {
   error?: string;
-  /** tăng lên sau mỗi lần lưu thành công để client đóng form */
+  /** Increment after each successful save so the client can close the form. */
   savedAt?: number;
 }
 

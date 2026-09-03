@@ -85,7 +85,7 @@ function FoodCard({
       size="sm"
       className="group relative h-full transition-colors hover:ring-primary/40"
     >
-      {/* nút phủ toàn thẻ: bấm chỗ nào cũng mở form sửa món */}
+      {/* Full-card overlay button: clicking anywhere opens the edit form */}
       <button
         type="button"
         onClick={onEdit}
@@ -150,7 +150,7 @@ function FoodSection({
   if (foods.length === 0) return null;
   return (
     <section>
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2 border-b border-border/70 pb-2.5">
         <FoodTypeTile type={type} className="size-7" iconClassName="size-4" />
         <h2 className="font-heading text-base font-semibold tracking-[-0.01em]">
           {FOOD_TYPE_META[type].label}
@@ -210,7 +210,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
       f.cookingMethod.toLowerCase().includes(q)
     );
   });
-  // rating cao trước, đồng hạng thì theo tên; mặc định giữ thứ tự tên từ server
+  // Sort higher ratings first; ties use the name; by default preserve the server's name order
   const sorted =
     sort === "RATING"
       ? [...filtered].sort(
@@ -279,7 +279,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
         </EmptyState>
       ) : (
         <>
-          <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+          <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2.5 rounded-xl border border-border/70 bg-card p-2">
             <InputGroup className="h-11 min-w-44 flex-1 xl:h-10 xl:w-72 xl:flex-none">
               <InputGroupAddon>
                 <Search />
@@ -364,7 +364,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
               </Button>
             </EmptyState>
           ) : (
-            <div className="flex flex-col gap-7">
+            <div className="flex flex-col gap-8">
               <FoodSection
                 type="MAIN"
                 foods={mains}
@@ -421,7 +421,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
             <AlertDialogCancel disabled={deleting}>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
-                e.preventDefault(); // giữ dialog mở tới khi xóa xong
+                e.preventDefault(); // keep the dialog open until deletion finishes
                 confirmDelete();
               }}
               disabled={deleting}

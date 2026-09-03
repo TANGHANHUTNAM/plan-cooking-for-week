@@ -1,6 +1,6 @@
-// Bộ chọn món "thông minh" — hàm thuần, không gọi DB, để test được.
-// Điểm = 2.0*yêu thích + 1.5*hay ăn (log) + 1.5*lâu chưa ăn + 1.0*ngẫu nhiên,
-// sau đó weighted-random trong top 5 để kết quả mỗi lần một khác nhưng vẫn hợp lý.
+// "Smart" food selector — pure, database-free, and testable.
+// Score = 2.0*favorites + 1.5*frequency (log) + 1.5*staleness + 1.0*randomness,
+// then weighted-random within the top 5 so each result varies while staying sensible.
 
 export type FoodPosition = "MAIN" | "SIDE";
 
@@ -14,14 +14,14 @@ export interface CandidateFood {
 }
 
 export interface PickContext {
-  /** id các món đã dùng trong tuần đang xét (quy tắc: không lặp trong tuần) */
+  /** IDs of foods used in the week under consideration (rule: no repeats within the week). */
   usedIds: ReadonlySet<string>;
-  /** món phải tránh tuyệt đối kể cả khi nới lỏng (vd: đã có trong cùng ngày) */
+  /** Foods to avoid absolutely even when relaxing constraints (e.g. foods already used that day). */
   avoidIds?: ReadonlySet<string>;
-  /** số lần mỗi món đã xuất hiện trong tuần — khi nới lỏng sẽ ưu tiên món lặp ít nhất */
+  /** Number of times each food appeared this week — when relaxing constraints, prefer least-repeated foods. */
   usedCounts?: ReadonlyMap<string, number>;
   now: Date;
-  /** để test: thay Math.random */
+  /** For tests: replace Math.random. */
   rng?: () => number;
 }
 
@@ -47,7 +47,7 @@ export function scoreFood(
       ? Math.log(1 + food.totalCooked) / Math.log(1 + maxCooked)
       : 0;
 
-  let staleness = 1; // chưa nấu bao giờ = "lâu nhất"
+  let staleness = 1; // never cooked = "most stale"
   if (food.lastCookedAt) {
     const days = Math.max(
       0,
@@ -64,7 +64,7 @@ export function scoreFood(
   );
 }
 
-/** Top `count` món điểm cao nhất (không random-hóa) — dùng cho mục "Gợi ý phù hợp". */
+/** Top `count` foods by score (without randomization) — used for "Suggested matches". */
 export function suggestFoods(
   pool: CandidateFood[],
   ctx: PickContext,
@@ -81,9 +81,9 @@ export function suggestFoods(
 }
 
 /**
- * Chọn 1 món: chấm điểm cả pool (trừ món đã dùng trong tuần), lấy top 5,
- * rồi weighted-random theo điểm trong top đó.
- * Pool cạn (mọi món đều đã dùng) -> nới lỏng: cho phép lặp, ưu tiên món ít lặp.
+ * Choose one food: score the whole pool (excluding foods already used this week), take the top 5,
+ * then weighted-random by score within that group.
+ * If the pool is exhausted (all foods already used), relax the rule and prefer least-repeated foods.
  */
 export function pickFood(
   pool: CandidateFood[],
@@ -96,8 +96,8 @@ export function pickFood(
     (f) => !ctx.usedIds.has(f.id) && !ctx.avoidIds?.has(f.id)
   );
   if (candidates.length === 0) {
-    // nới lỏng khi cạn món: cho phép lặp trong tuần nhưng vẫn tránh avoidIds
-    // (cùng ngày) và ưu tiên các món có số lần lặp thấp nhất
+    // relax constraints when the pool is exhausted: allow repeats within the week but still avoid avoidIds
+    // (same day) and prefer foods with the fewest repeats
     let relaxed = pool.filter((f) => !ctx.avoidIds?.has(f.id));
     if (relaxed.length === 0) relaxed = [...pool];
     if (ctx.usedCounts) {
@@ -126,16 +126,16 @@ export function pickFood(
 }
 
 export interface WeekAssignment {
-  dayIndex: number; // 0..6 (T2..CN)
+  dayIndex: number; // 0..6 (Mon..Sun)
   period: "LUNCH" | "DINNER";
   mainId: string;
-  /** null = bữa không có món phụ (vd: chưa lưu món phụ nào) */
+  /** null = meal has no side dish (e.g. no side foods saved yet). */
   sideId: string | null;
 }
 
 /**
- * Random cả tuần: 7 ngày x 2 bữa, mỗi bữa 1 món chính (+ 1 món phụ nếu có pool).
- * Không lặp món trong tuần chừng nào pool còn đủ; cạn thì pickFood tự nới lỏng.
+ * Randomize the whole week: 7 days × 2 meals, each with 1 main dish (+ 1 side if a pool exists).
+ * Do not repeat foods within the week while the pool has enough options; when exhausted, pickFood relaxes the rule.
  */
 export function generateWeekAssignments(
   mains: CandidateFood[],

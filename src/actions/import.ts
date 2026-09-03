@@ -34,7 +34,7 @@ export interface ParseImportResult {
   rows?: PreviewRow[];
 }
 
-/** Đọc file Excel, trả preview từng dòng (hợp lệ / trùng / lỗi) — chưa ghi gì vào DB. */
+/** Read an Excel file and return a per-row preview (valid / duplicate / error) without writing to the DB. */
 export async function parseImportExcel(
   formData: FormData
 ): Promise<ParseImportResult> {
@@ -64,7 +64,7 @@ export async function parseImportExcel(
 
   const raws: RawImportRow[] = [];
   sheet.eachRow((row, rowNumber) => {
-    if (rowNumber === 1) return; // dòng tiêu đề
+    if (rowNumber === 1) return; // header row
     raws.push({
       rowNumber,
       name: row.getCell(1).text ?? "",
@@ -92,7 +92,7 @@ export async function parseImportExcel(
 
   const normalized = nonEmpty.map(normalizeImportRow);
 
-  // đánh dấu trùng: với món đã có trong app + trùng lặp ngay trong file
+  // mark duplicates: against existing app foods and duplicates within the file
   const existingKeys = await loadExistingFoodKeys();
   const seenInFile = new Set<string>();
   const rows: PreviewRow[] = normalized.map((r) => {
@@ -114,7 +114,7 @@ export interface ImportFoodsResult {
   skipped?: number;
 }
 
-/** Ghi các món hợp lệ vào DB (3 query gộp trong 1 transaction). */
+/** Write valid foods to the DB (three queries grouped in one transaction). */
 export async function importFoods(
   rows: ImportFoodData[]
 ): Promise<ImportFoodsResult> {
@@ -127,7 +127,7 @@ export async function importFoods(
     return { error: `Tối đa ${MAX_IMPORT_ROWS} món mỗi lần nhập` };
   }
 
-  // không tin dữ liệu từ client — validate lại từng dòng bằng schema chung
+  // do not trust client data — validate each row again with the shared schema
   const validated: ImportFoodData[] = [];
   for (const row of rows) {
     const parsed = foodSchema.safeParse({ ...row, note: row.note ?? "" });
@@ -137,7 +137,7 @@ export async function importFoods(
     validated.push({ ...rest, note: note || null });
   }
 
-  // bỏ trùng lần cuối (trong batch + với DB)
+  // final deduplication (within the batch and against the DB)
   const existingKeys = await loadExistingFoodKeys();
   const seen = new Set<string>();
   const toCreate = validated.filter((r) => {

@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/empty-state";
 import { MealCard, PeriodChip } from "@/components/meal-card";
 import { GenerateWeekButton } from "@/components/generate-week-button";
 
-/** Chỗ của bữa chưa lên lịch — giữ hai cột trưa/tối cân nhau. */
+/** Placeholder for an unscheduled meal — keeps the lunch/dinner columns balanced. */
 function MissingMealCard({
   period,
   weekStart,
@@ -93,7 +93,7 @@ export default async function TodayPage() {
         </EmptyState>
       ) : (
         <div className="flex flex-col gap-4">
-          <Card size="sm">
+          <Card size="sm" className="border-l-4 border-l-primary/60">
             <CardContent className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
               <div className="w-full min-w-[12rem] sm:w-80">
                 <p className="text-sm font-medium">
@@ -119,7 +119,7 @@ export default async function TodayPage() {
             </CardContent>
           </Card>
 
-          <div className="grid auto-rows-fr items-stretch gap-4 md:grid-cols-2">
+          <div className="grid auto-rows-fr items-stretch gap-5 md:grid-cols-2">
             {lunch ? (
               <MealCard
                 meal={lunch}

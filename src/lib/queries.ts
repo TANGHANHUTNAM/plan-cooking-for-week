@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { dateToISO, isoToDate } from "@/lib/week";
 
-/** Thực đơn 1 tuần của CẢ NHÀ (unique theo tuần) kèm món + nguyên liệu + ai không ăn. */
+/** One household's weekly plan (unique by week), including foods, ingredients, and absences. */
 export async function getWeekPlan(weekStartISO: string) {
   return prisma.mealPlan.findUnique({
     where: { weekStart: isoToDate(weekStartISO) },
@@ -10,7 +10,7 @@ export async function getWeekPlan(weekStartISO: string) {
         orderBy: [{ date: "asc" }, { period: "asc" }],
         include: {
           items: {
-            orderBy: { position: "asc" }, // MAIN trước SIDE
+            orderBy: { position: "asc" }, // MAIN before SIDE
             include: { food: { include: { ingredients: true } } },
           },
           absences: { select: { userId: true } },
@@ -23,7 +23,7 @@ export async function getWeekPlan(weekStartISO: string) {
 export type WeekPlan = NonNullable<Awaited<ReturnType<typeof getWeekPlan>>>;
 export type WeekMeal = WeekPlan["meals"][number];
 
-/** Trạng thái đi chợ dùng chung: tick theo tuần và đồ mua thêm theo ngày. */
+/** Shared shopping state: weekly ingredient checks and extra items by date. */
 export async function getShoppingState(
   weekStartISO: string,
   extraEndISO: string
@@ -58,7 +58,7 @@ export async function getShoppingState(
 
 export type ShoppingState = Awaited<ReturnType<typeof getShoppingState>>;
 
-/** Toàn bộ món + thống kê, sắp theo tên. */
+/** All foods and their statistics, sorted by name. */
 export async function getAllFoods() {
   return prisma.food.findMany({
     orderBy: [{ name: "asc" }],
@@ -68,7 +68,7 @@ export async function getAllFoods() {
 
 export type FoodWithMeta = Awaited<ReturnType<typeof getAllFoods>>[number];
 
-/** Các thành viên gia đình (theo thứ tự tạo tài khoản). */
+/** Household members, ordered by account creation. */
 export async function getMembers() {
   return prisma.user.findMany({
     orderBy: { createdAt: "asc" },

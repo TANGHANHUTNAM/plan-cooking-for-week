@@ -1,5 +1,5 @@
-// DTO tuần tự hóa được để truyền từ Server Component sang Client Component
-// (Date -> chuỗi ISO, gọt bớt field thừa).
+// Serializable week DTO for passing from a Server Component to a Client Component
+// (Date -> ISO string, trimming unused fields).
 
 import type { FoodWithMeta, Member, WeekMeal } from "@/lib/queries";
 import { dateToISO } from "@/lib/week";
@@ -35,10 +35,10 @@ export interface MealDTO {
   dateISO: string;
   period: "LUNCH" | "DINNER";
   cookedAt: string | null;
-  /** ghi chú cho bữa (vd: thiếu nước mắm) — hiện cả ở tab Đi chợ */
+  /** Meal note (e.g. missing fish sauce), also shown on the Shopping tab. */
   note: string | null;
   items: MealItemDTO[];
-  /** id thành viên KHÔNG ăn bữa này (mặc định ai cũng ăn) */
+  /** IDs of members who do NOT eat this meal (everyone eats by default). */
   absentUserIds: string[];
 }
 
@@ -74,7 +74,7 @@ export function mapMeal(meal: WeekMeal): MealDTO {
         note: item.food.note,
         favoriteScore: item.food.favoriteScore,
         ingredients: item.food.ingredients.map((i) => i.name),
-        totalCooked: 0, // không dùng trong lịch
+        totalCooked: 0, // unused in the calendar
       },
     })),
   };

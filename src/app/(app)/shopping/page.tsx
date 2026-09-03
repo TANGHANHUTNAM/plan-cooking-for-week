@@ -21,7 +21,7 @@ function toShoppingMeals(plan: WeekPlan | null): ShoppingMeal[] {
     dateISO: dateToISO(meal.date),
     period: meal.period,
     note: meal.note,
-    // món chính trước, món phụ sau — cùng thứ tự với thẻ bữa ăn
+    // main dishes first, side dishes second — match the meal-card order
     dishes: meal.items
       .map((item) => ({
         name: item.food.name,
@@ -50,7 +50,7 @@ export default async function ShoppingPage({
   const tomorrowWeek = weekStartISO(tomorrow);
   const weekEnd = addDaysISO(weekStart, 6);
 
-  // "Tối nay + trưa mai": Chủ nhật thì trưa mai nằm ở tuần sau -> tải thêm tuần đó
+  // "Tonight + tomorrow lunch": on Sunday, tomorrow lunch is in the next week -> load that week too
   const extraEnd =
     isCurrentWeek && tomorrowWeek !== weekStart ? tomorrow : weekEnd;
   const [plan, nextWeekPlan, shoppingState] = await Promise.all([

@@ -13,7 +13,7 @@ import type * as Prisma from "../internal/prismaNamespace";
 
 /**
  * Model MealAbsence
- * Một dòng = thành viên KHÔNG ăn bữa đó (mặc định ai cũng ăn)
+ * One row represents a member who does NOT eat the meal (everyone eats by default)
  */
 export type MealAbsenceModel =
   runtime.Types.Result.DefaultSelection<Prisma.$MealAbsencePayload>;

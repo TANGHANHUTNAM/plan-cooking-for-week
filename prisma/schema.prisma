@@ -28,7 +28,7 @@ model User {
   @@map("users")
 }
 
-/// Có dòng = nguyên liệu đã mua trong tuần, dùng chung cho cả nhà.
+/// One row represents an ingredient bought for the week, shared by the household.
 model ShoppingIngredientCheck {
   id             String   @id @default(cuid())
   weekStart      DateTime @db.Date
@@ -40,7 +40,7 @@ model ShoppingIngredientCheck {
   @@map("shopping_ingredient_checks")
 }
 
-/// Đồ mua thêm theo ngày, dùng chung cho cả nhà.
+/// Extra items for a given day, shared by the household.
 model ShoppingExtra {
   id        String   @id @default(cuid())
   date      DateTime @db.Date
@@ -84,8 +84,8 @@ model MealPlan {
   createdAt DateTime @default(now())
   meals     Meal[]
 
-  // thực đơn là của chung cả nhà — không gắn với người tạo,
-  // nhờ vậy xóa tài khoản không đụng tới lịch tuần
+  // The meal plan belongs to the household, not its creator,
+  // so deleting an account does not affect the weekly plan
   @@unique([weekStart])
   @@map("meal_plans")
 }
@@ -96,7 +96,7 @@ model Meal {
   date       DateTime      @db.Date
   period     MealPeriod
   cookedAt   DateTime?
-  /// Ghi chú của cả nhà cho bữa này (vd: thiếu nước mắm) — hiện cả ở tab Đi chợ
+  /// A household note for this meal (e.g. missing fish sauce), also shown on the Shopping tab
   note       String?
   mealPlan   MealPlan      @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
   items      MealItem[]
@@ -106,7 +106,7 @@ model Meal {
   @@map("meals")
 }
 
-/// Một dòng = thành viên KHÔNG ăn bữa đó (mặc định ai cũng ăn)
+/// One row represents a member who does NOT eat the meal (everyone eats by default)
 model MealAbsence {
   id     String @id @default(cuid())
   mealId String

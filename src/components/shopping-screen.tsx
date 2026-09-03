@@ -60,7 +60,7 @@ import { FoodTypeTile } from "@/components/food-type";
 import { SectionHeading } from "@/components/page-header";
 
 const WEEK_SCOPE = "WEEK";
-/** Kiểu đi chợ buổi chiều của nhà: mua cho bữa tối nay + bữa trưa ngày mai */
+/** The household's afternoon shopping view: buy for tonight's dinner + tomorrow's lunch */
 const EVENING_SCOPE = "EVENING";
 
 const PERIOD_LABEL = { LUNCH: "Trưa", DINNER: "Tối" } as const;
@@ -85,7 +85,7 @@ export function ShoppingScreen({
 }) {
   const days = weekDaysISO(weekStart);
   const weekEnd = addDaysISO(weekStart, 6);
-  // nhà hay đi chợ buổi chiều -> mặc định gom "tối nay + trưa mai"
+  // the household usually shops in the afternoon -> default to "tonight + tomorrow lunch"
   const [scope, setScope] = useState<string>(() =>
     isCurrentWeek ? EVENING_SCOPE : WEEK_SCOPE
   );
@@ -98,7 +98,7 @@ export function ShoppingScreen({
   const [pending, startTransition] = useTransition();
   const activeChipRef = useRef<HTMLButtonElement | null>(null);
 
-  // đưa chip đang chọn vào tầm nhìn trên mobile
+  // bring the selected chip into view on mobile
   useEffect(() => {
     activeChipRef.current?.scrollIntoView({
       inline: "center",
@@ -106,7 +106,7 @@ export function ShoppingScreen({
     });
   }, [scope]);
 
-  // đổi phạm vi cũng đổi ngày mặc định cho mục "Mua thêm"
+  // changing the scope also changes the default date for "Add item"
   const onScopeChange = (nextScope: string) => {
     if (!nextScope) return;
     setScope(nextScope);
@@ -157,7 +157,7 @@ export function ShoppingScreen({
         PERIOD_ORDER[a.period] - PERIOD_ORDER[b.period]
     );
 
-  // "Tối nay" / "Trưa mai" / "Trưa Thứ 2"
+  // "Tonight" / "Tomorrow lunch" / "Monday lunch"
   const mealTitle = (m: ShoppingMeal) => {
     const period = PERIOD_LABEL[m.period];
     if (m.dateISO === today) return `${period} nay`;
@@ -188,7 +188,7 @@ export function ShoppingScreen({
       meal,
       dishes: meal.dishes.filter((d) => d.ingredients.length > 0),
     }))
-    // bữa có ghi chú vẫn hiện dù món không có nguyên liệu — kẻo sót "thiếu gia vị"
+    // meals with notes remain visible even without ingredients — do not miss "missing seasoning"
     .filter((g) => g.dishes.length > 0 || g.meal.note);
 
   const onCopy = async () => {
@@ -402,10 +402,6 @@ export function ShoppingScreen({
             ))}
           </ToggleGroup>
         </div>
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background via-background/90 to-transparent lg:hidden"
-        />
       </div>
 
       {meals.length === 0 ? (
@@ -445,7 +441,7 @@ export function ShoppingScreen({
             </Alert>
           ) : null}
 
-          <Card size="sm">
+          <Card size="sm" className="border-l-4 border-l-primary/60">
             <CardContent className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
               <div className="w-full min-w-[12rem] sm:w-80">
                 <p className="text-sm font-medium">
@@ -497,7 +493,12 @@ export function ShoppingScreen({
                   <Card
                     key={dish.name}
                     size="sm"
-                    className="h-full gap-0 overflow-hidden py-0"
+                    className={cn(
+                      "h-full gap-0 overflow-hidden border-l-2 py-0",
+                      meal.period === "LUNCH"
+                        ? "border-l-warm/70"
+                        : "border-l-cool/70"
+                    )}
                   >
                     <p className="flex items-center gap-2 border-b bg-muted/50 px-3.5 py-2 text-[13px] font-semibold">
                       <FoodTypeTile

@@ -11,16 +11,16 @@ import {
 
 describe("week helpers (giờ Việt Nam)", () => {
   it("todayISO đổi ngày theo múi giờ VN, không theo UTC", () => {
-    // 18:00 UTC = 01:00 hôm sau giờ VN
+    // 18:00 UTC = 01:00 the next day in Vietnam
     expect(todayISO(new Date("2026-08-30T18:00:00Z"))).toBe("2026-08-31");
-    // 03:00 UTC = 10:00 cùng ngày giờ VN
+    // 03:00 UTC = 10:00 the same day in Vietnam
     expect(todayISO(new Date("2026-08-30T03:00:00Z"))).toBe("2026-08-30");
   });
 
   it("weekStartISO luôn về Thứ 2", () => {
-    expect(weekStartISO("2026-08-30")).toBe("2026-08-24"); // Chủ nhật -> T2 trước đó
-    expect(weekStartISO("2026-08-24")).toBe("2026-08-24"); // Thứ 2 giữ nguyên
-    expect(weekStartISO("2026-08-26")).toBe("2026-08-24"); // Thứ 4
+    expect(weekStartISO("2026-08-30")).toBe("2026-08-24"); // Sunday -> previous Monday
+    expect(weekStartISO("2026-08-24")).toBe("2026-08-24"); // Monday remains unchanged
+    expect(weekStartISO("2026-08-26")).toBe("2026-08-24"); // Wednesday
   });
 
   it("weekdayIndex: T2=0 ... CN=6", () => {

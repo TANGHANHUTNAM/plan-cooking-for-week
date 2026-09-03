@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Lịch tuần chỉ xếp đủ 7 cột khi màn hình thực sự rộng. Phải khai báo
-     breakpoint ở đây thay vì dùng min-[1760px]: — Tailwind v4 xuất các
-     variant tùy biến TRƯỚC breakpoint có tên, nên xl: sẽ đè mất. */
+  /* The weekly calendar only uses all 7 columns when the screen is truly wide. Declare
+     the breakpoint here instead of using min-[1760px]: — Tailwind v4 emits custom
+     variants before named breakpoints, so xl: would override it. */
   --breakpoint-3xl: 110rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -59,13 +59,13 @@
 }
 
 /*
- * Bảng màu PlanFoodInWeek.
- * Nền và viền để trung tính (hơi lạnh) nên màu xanh lá nổi hẳn lên thay vì
- * chìm vào nền như bản cũ. Ba màu ngữ nghĩa:
- *   --primary : xanh ngọc, dùng cho hành động chính và dấu "hôm nay"
- *   --warm    : hổ phách, dùng cho bữa TRƯA, sao yêu thích, ghi chú
- *   --cool    : chàm, dùng cho bữa TỐI
- * Cặp warm/cool là cách phân biệt hai bữa trong ngày mà không cần đọc chữ.
+ * PlanFoodInWeek color palette.
+ * Keep the background and borders neutral (slightly cool) so green stands out
+ * instead of blending into the old background. Three semantic colors:
+ *   --primary: teal green, used for primary actions and the "today" marker
+ *   --warm: amber, used for lunch, favorite stars, and notes
+ *   --cool: indigo, used for dinner
+ * The warm/cool pair distinguishes the two meals without relying on text.
  */
 :root {
   --background: oklch(0.984 0.002 250);
@@ -98,7 +98,7 @@
   --chart-4: oklch(0.545 0.115 266);
   --chart-5: oklch(0.515 0.012 255);
   --radius: 0.75rem;
-  /* chrome (sidebar) tối hơn vùng nội dung một chút để thẻ trắng nổi lên trên */
+  /* Make the sidebar chrome slightly darker than the content area so white cards stand out. */
   --sidebar: oklch(0.972 0.003 250);
   --sidebar-foreground: oklch(0.205 0.012 255);
   --sidebar-primary: oklch(0.515 0.128 162);
@@ -149,8 +149,8 @@
   --sidebar-ring: oklch(0.76 0.145 163);
 }
 
-/* Dark mode do next-themes gắn/bỏ class .dark trên <html>
-   (chế độ "Hệ thống" cũng do next-themes theo dõi prefers-color-scheme) */
+/* Dark mode is toggled by next-themes via the .dark class on <html>
+   (the "system" mode also follows prefers-color-scheme through next-themes). */
 
 @layer base {
   * {
@@ -161,15 +161,16 @@
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-dvh bg-background text-foreground;
     text-rendering: optimizeLegibility;
+    font-feature-settings: "kern" 1;
   }
   ::selection {
     @apply bg-primary/15 text-foreground;
   }
-  /* Tailwind v4 để <button> dùng cursor mặc định của trình duyệt.
-     Trả lại con trỏ tay cho mọi thứ bấm được, kể cả Button asChild
-     (render ra <a>/<label> nhưng vẫn giữ data-slot="button"). */
+  /* Tailwind v4 gives <button> the browser's default cursor.
+     Restore the pointer cursor for anything clickable, including Button asChild
+     (rendered as <a>/<label> while retaining data-slot="button"). */
   button:not(:disabled),
   [data-slot="button"]:not(:disabled, [aria-disabled="true"]),
   [role="button"]:not([aria-disabled="true"]),
@@ -184,7 +185,7 @@
   [aria-disabled="true"] {
     cursor: not-allowed;
   }
-  /* Thanh cuộn mảnh cho vùng danh sách dài (gợi ý món, xem trước import) */
+  /* Slim scrollbar for long lists (suggestions, import preview) */
   @supports (scrollbar-width: thin) {
     .scrollbar-thin {
       scrollbar-width: thin;

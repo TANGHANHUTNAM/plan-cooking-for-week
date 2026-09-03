@@ -44,7 +44,7 @@ import {
 import { FoodTypeIcon } from "@/components/food-type";
 import { SwapSheet } from "@/components/swap-sheet";
 
-/** Trưa dùng tông hổ phách, tối dùng tông chàm — nhìn màu là biết bữa nào. */
+/** Lunch uses amber, dinner uses indigo — the color makes the meal obvious at a glance. */
 const PERIOD_META = {
   LUNCH: {
     label: "Trưa",
@@ -70,6 +70,7 @@ export function PeriodChip({
     <span
       className={cn(
         "inline-flex w-fit items-center gap-1.5 rounded-full font-semibold",
+        "border border-current/10",
         chip,
         size === "full" ? "px-2.5 py-1 text-[13px]" : "px-2 py-0.5 text-[11px]"
       )}
@@ -91,8 +92,8 @@ function cookedTime(iso: string): string {
   }).format(new Date(iso));
 }
 
-/** Một vị trí món trong bữa. Luôn chiếm một hàng, kể cả khi chưa có món —
- *  nhờ vậy mọi thẻ bữa ăn cao bằng nhau thay vì co lại khi thiếu món phụ. */
+/** One food position in a meal. It always occupies one row, even when empty —
+ *  this keeps meal cards the same height instead of collapsing when the side dish is missing. */
 function DishRow({
   role,
   name,
@@ -122,8 +123,8 @@ function DishRow({
               ? isMain
                 ? "text-[17px]"
                 : "text-[15px]"
-              : // lịch tuần: cùng cỡ chữ và luôn chừa 2 dòng, để món chính và
-                // món phụ của mọi ngày nằm đúng trên một hàng
+              : // weekly calendar: use the same text size and always reserve two lines, so main and
+                // side dishes for every day align on one row
                 "min-h-[2lh] text-sm"
           )}
         >
@@ -154,7 +155,7 @@ function DishRow({
   );
 }
 
-/** Ô trống giữ đúng chiều cao của một hàng món, để các bữa vẫn thẳng hàng. */
+/** Empty slot keeps the height of one food row so meals stay aligned. */
 function EmptyDishRow({
   role,
   size,
@@ -162,26 +163,13 @@ function EmptyDishRow({
 }: {
   role: "MAIN" | "SIDE";
   size: "full" | "compact";
-  onAdd?: () => void;
+  onAdd: () => void;
 }) {
   const box = cn(
     "flex w-full items-center gap-2.5 rounded-md border border-dashed border-border text-left text-muted-foreground",
     size === "full" ? "px-3 py-2.5" : "px-2.5 py-2"
   );
   const text = cn("font-medium", size === "full" ? "text-sm" : "text-xs");
-
-  // Chỉ món phụ mới thêm lại được; thiếu món chính thì random lại tuần
-  if (role === "MAIN") {
-    return (
-      <p className={box}>
-        <FoodTypeIcon
-          type="MAIN"
-          className={size === "full" ? "size-4" : "size-3.5"}
-        />
-        <span className={text}>Chưa có món chính</span>
-      </p>
-    );
-  }
 
   return (
     <button
@@ -193,7 +181,9 @@ function EmptyDishRow({
       )}
     >
       <Plus className={size === "full" ? "size-4" : "size-3.5"} />
-      <span className={text}>Thêm món phụ</span>
+      <span className={text}>
+        {role === "MAIN" ? "Thêm món chính" : "Thêm món phụ"}
+      </span>
     </button>
   );
 }
@@ -213,10 +203,10 @@ export function MealCard({
     position: "MAIN" | "SIDE";
     item: MealItemDTO | null;
   } | null>(null);
-  const [noteDraft, setNoteDraft] = useState<string | null>(null); // null = không sửa
+  const [noteDraft, setNoteDraft] = useState<string | null>(null); // null = no edit
   const [pending, startTransition] = useTransition();
 
-  // đánh dấu ăn/không ăn đổi ngay trên UI, server xác nhận sau
+  // attendance toggles immediately in the UI; the server confirms afterward
   const [absentIds, toggleAbsentOptimistic] = useOptimistic(
     new Set(meal.absentUserIds),
     (state: ReadonlySet<string>, userId: string) => {
@@ -289,7 +279,11 @@ export function MealCard({
           onSwap={() => openSwap("MAIN", main)}
         />
       ) : (
-        <EmptyDishRow role="MAIN" size={variant} />
+        <EmptyDishRow
+          role="MAIN"
+          size={variant}
+          onAdd={() => openSwap("MAIN", null)}
+        />
       )}
       <Separator />
       {side ? (
@@ -395,7 +389,12 @@ export function MealCard({
 
   if (!isFull) {
     return (
-      <div className="flex flex-col gap-2.5 rounded-lg bg-muted/60 p-3">
+      <div
+        className={cn(
+          "flex flex-col gap-2.5 rounded-xl p-3 ring-1 ring-inset ring-current/10",
+          meal.period === "LUNCH" ? "bg-warm-surface/60" : "bg-cool-surface/60"
+        )}
+      >
         <div className="flex items-center justify-between gap-2">
           {periodChip}
           <Tooltip>
@@ -439,7 +438,12 @@ export function MealCard({
   }
 
   return (
-    <Card className="h-full">
+    <Card
+      className={cn(
+        "h-full border-l-4",
+        meal.period === "LUNCH" ? "border-l-warm/70" : "border-l-cool/70"
+      )}
+    >
       <CardHeader className="border-b">
         {periodChip}
         <CardAction>

@@ -2,12 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   turbopack: {
-    // OneDrive path + package-lock.json lạc ở thư mục home làm Next đoán sai workspace root
+    // A stray OneDrive path and package-lock.json in the home directory make Next infer the wrong workspace root
     root: process.cwd(),
   },
   experimental: {
     serverActions: {
-      // upload file Excel import món ăn (mặc định 1MB hơi sát)
+      // Excel upload for food import (the default 1MB limit is too tight)
       bodySizeLimit: "4mb",
     },
   },

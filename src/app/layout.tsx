@@ -41,7 +41,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    // suppressHydrationWarning: next-themes gắn class .dark lên <html> trước hydration
+    // suppressHydrationWarning: next-themes adds .dark to <html> before hydration
     <html lang="vi" className={beVietnam.variable} suppressHydrationWarning>
       <body className="bg-background font-sans text-foreground antialiased">
         <ThemeProvider

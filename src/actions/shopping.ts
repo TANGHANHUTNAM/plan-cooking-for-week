@@ -50,7 +50,7 @@ async function requireSession(): Promise<void> {
   if (!session) throw new Error("Chưa đăng nhập");
 }
 
-/** Bật/tắt nguyên liệu theo khóa chuẩn hóa, dùng chung cho cả nhà trong một tuần. */
+/** Toggle an ingredient by its normalized key, shared by the household for one week. */
 export async function setShoppingIngredientChecked(
   weekStart: string,
   ingredientName: string,
@@ -103,7 +103,7 @@ export async function setShoppingIngredientChecked(
   return {};
 }
 
-/** Thêm một món mua thêm vào ngày đã chọn, dùng chung cho cả nhà. */
+/** Add an extra item to the selected date, shared by the household. */
 export async function addShoppingExtra(
   dateISO: string,
   name: string
@@ -138,7 +138,7 @@ export async function addShoppingExtra(
   }
 }
 
-/** Đánh dấu hoặc bỏ đánh dấu một món mua thêm. */
+/** Check or uncheck an extra shopping item. */
 export async function setShoppingExtraPurchased(
   extraId: string,
   purchased: boolean
@@ -163,7 +163,7 @@ export async function setShoppingExtraPurchased(
   return {};
 }
 
-/** Xóa một món mua thêm. */
+/** Delete an extra shopping item. */
 export async function deleteShoppingExtra(
   extraId: string
 ): Promise<ShoppingActionResult> {

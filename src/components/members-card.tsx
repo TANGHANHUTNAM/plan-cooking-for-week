@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMember } from "@/actions/members";
@@ -47,6 +48,7 @@ export function MembersCard({
   members: Member[];
   currentUserId: string;
 }) {
+  const router = useRouter();
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [deleting, startDeleting] = useTransition();
 
@@ -57,9 +59,14 @@ export function MembersCard({
     if (!target) return;
     startDeleting(async () => {
       const res = await deleteMember(target.id);
-      // tự xóa chính mình: action đã redirect về /login, không chạy tới đây
-      if (res.error) toast.error(res.error);
-      else toast.success(`Đã xóa tài khoản “${target.name}”`);
+      if (res.error) {
+        toast.error(res.error);
+      } else if (res.deletedSelf) {
+        router.replace("/login");
+        return;
+      } else {
+        toast.success(`Đã xóa tài khoản “${target.name}”`);
+      }
       setDeleteTarget(null);
     });
   };
@@ -139,7 +146,7 @@ export function MembersCard({
             <AlertDialogCancel disabled={deleting}>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
-                e.preventDefault(); // giữ dialog mở tới khi xóa xong
+                e.preventDefault(); // keep the dialog open until deletion finishes
                 confirmDelete();
               }}
               disabled={deleting}

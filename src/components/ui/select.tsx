@@ -39,10 +39,10 @@ function SelectValue({
 }
 
 /**
- * Cỡ nút select nằm trong cva với class thường (h-7/h-10...) thay vì
- * data-[size=…]:h-7 như bản gốc. Class có variant đứng trước sẽ thắng về
- * độ ưu tiên CSS và tailwind-merge không gộp được, nên className truyền vào
- * bị bỏ qua — nút select cao 28px trong khi input cạnh nó cao 40px.
+ * The select button size lives in cva's regular classes (h-7/h-10...) rather than
+ * data-[size=…]:h-7 as in the original. A class with a variant comes first,
+ * winning CSS precedence, and tailwind-merge cannot combine them, so className
+ * is ignored — the select button is 28px tall while the adjacent input is 40px.
  */
 const selectTriggerVariants = cva(
   "flex w-fit items-center justify-between gap-1.5 rounded-md border border-input bg-input/20 whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
@@ -101,7 +101,7 @@ function SelectContent({
         data-align-trigger={position === "item-aligned"}
         className={cn(
           "relative z-50 max-h-(--radix-select-content-available-height) min-w-32 origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          // rộng tối thiểu bằng nút bấm để bảng chọn không hẹp hơn ô đang mở
+          // minimum width equal to the trigger so the menu is not narrower than its trigger
           position === "popper" && "min-w-(--radix-select-trigger-width)",
           className
         )}
@@ -111,8 +111,8 @@ function SelectContent({
         {...props}
       >
         <SelectScrollUpButton />
-        {/* bỏ h-(--radix-select-trigger-height) của bản gốc: nó ép khung danh sách
-            cao đúng bằng nút bấm nên danh sách dài bị cắt cụt */}
+        {/* Remove h-(--radix-select-trigger-height) from the original: it forces the list
+            to match the trigger height, so long lists are clipped. */}
         <SelectPrimitive.Viewport
           data-position={position}
           className="p-1 data-[position=popper]:w-full"

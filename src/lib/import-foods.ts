@@ -1,8 +1,8 @@
-// Chuẩn hóa dữ liệu import món ăn từ Excel — hàm thuần, có unit test.
+// Normalize food-import data from Excel — a pure function covered by unit tests.
 
 export const MAX_IMPORT_ROWS = 200;
 
-/** Nội dung thô đọc từ 1 dòng Excel (cột A→F). */
+/** Raw contents read from one Excel row (columns A→F). */
 export interface RawImportRow {
   rowNumber: number;
   name: string;
@@ -30,12 +30,12 @@ export type PreviewRow =
 export function stripDiacritics(s: string): string {
   return s
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // dải dấu kết hợp sau khi tách NFD
+    .replace(/[̀-ͯ]/g, "") // combining marks after NFD decomposition
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D");
 }
 
-/** "Chính"/"chinh"/"MAIN"/"Món chính" -> MAIN; "Phụ"/"side"... -> SIDE; khác -> null. */
+/** Map main-dish labels to MAIN, side-dish labels to SIDE, and other values to null. */
 export function parseFoodType(raw: string): "MAIN" | "SIDE" | null {
   const v = stripDiacritics(raw.trim().toLowerCase());
   if (["chinh", "mon chinh", "main"].includes(v)) return "MAIN";
@@ -43,7 +43,7 @@ export function parseFoodType(raw: string): "MAIN" | "SIDE" | null {
   return null;
 }
 
-/** Tách nguyên liệu theo dấu phẩy / chấm phẩy / xuống dòng, bỏ trùng, tối đa 30. */
+/** Split ingredients on commas, semicolons, or newlines; deduplicate; limit to 30. */
 export function splitIngredients(raw: string): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -59,7 +59,7 @@ export function splitIngredients(raw: string): string[] {
   return out;
 }
 
-/** "4" -> 4; ngoài khoảng thì kẹp về 0..5; không phải số -> 0. */
+/** Parse "4" as 4; clamp out-of-range values to 0..5; non-numbers become 0. */
 export function parseFavoriteScore(raw: string): number {
   const n = Number.parseFloat(raw.trim().replace(",", "."));
   if (Number.isNaN(n)) return 0;

@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { appendUniqueTags } from "@/lib/tag-input";
 import { Badge } from "@/components/ui/badge";
 
-/** Nhập nguyên liệu dạng chip: Enter hoặc dấu phẩy để tách, Backspace xóa chip cuối. */
+/** Enter ingredients as chips: Enter or comma splits them, Backspace removes the last chip. */
 export function TagInput({
   id,
   name,
@@ -60,7 +60,7 @@ export function TagInput({
             setDraft(v);
             return;
           }
-          // gõ/paste có dấu phẩy: tách thành chip ngay, giữ phần dang dở
+          // typing/pasting a comma: split into a chip immediately and keep the unfinished part
           const parts = v.split(",");
           const rest = parts.pop() ?? "";
           const adds = appendUniqueTags(

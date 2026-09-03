@@ -13,7 +13,7 @@ import type * as Prisma from "../internal/prismaNamespace";
 
 /**
  * Model ShoppingIngredientCheck
- * Có dòng = nguyên liệu đã mua trong tuần, dùng chung cho cả nhà.
+ * One row represents an ingredient bought for the week, shared by the household.
  */
 export type ShoppingIngredientCheckModel =
   runtime.Types.Result.DefaultSelection<Prisma.$ShoppingIngredientCheckPayload>;

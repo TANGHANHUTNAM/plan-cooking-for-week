@@ -8,15 +8,15 @@ import { APP_TABS, isTabActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
-/** Sidebar điều hướng cho desktop (lg trở lên) — thay cho bottom nav. */
+/** Desktop navigation sidebar (lg and up) — replaces the bottom nav. */
 export function SideNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-[16.5rem] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-5 lg:flex">
+    <aside className="sticky top-0 hidden h-dvh w-[16.5rem] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-6 lg:flex">
       <Link
         href="/"
-        className="mx-1 flex items-center gap-3 rounded-lg px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="mx-1 flex items-center gap-3 rounded-xl px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
           <CookingPot className="size-5" strokeWidth={2.2} />
@@ -42,13 +42,13 @@ export function SideNav() {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                "relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                 active
                   ? "bg-secondary font-semibold text-secondary-foreground"
                   : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              {/* vạch chỉ mục bên trái: cho biết tab đang mở mà không cần đổi cỡ chữ */}
+              {/* Left active marker: shows the current tab without changing text size */}
               <span
                 aria-hidden
                 className={cn(

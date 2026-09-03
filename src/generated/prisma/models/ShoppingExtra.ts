@@ -13,7 +13,7 @@ import type * as Prisma from "../internal/prismaNamespace";
 
 /**
  * Model ShoppingExtra
- * Đồ mua thêm theo ngày, dùng chung cho cả nhà.
+ * Extra items for a given day, shared by the household.
  */
 export type ShoppingExtraModel =
   runtime.Types.Result.DefaultSelection<Prisma.$ShoppingExtraPayload>;

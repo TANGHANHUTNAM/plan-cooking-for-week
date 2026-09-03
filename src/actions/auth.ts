@@ -33,7 +33,7 @@ export async function login(
     (await bcrypt.compare(parsed.data.password, user.passwordHash));
 
   if (!ok || !user) {
-    // làm chậm brute-force + không tiết lộ email có tồn tại hay không
+    // slow down brute-force attempts without revealing whether an email exists
     await new Promise((r) => setTimeout(r, 500));
     return { error: "Email hoặc mật khẩu không đúng" };
   }

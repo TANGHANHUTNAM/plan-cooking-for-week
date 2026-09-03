@@ -943,7 +943,7 @@ export type $MealPayload<
       period: $Enums.MealPeriod;
       cookedAt: Date | null;
       /**
-       * Ghi chú của cả nhà cho bữa này (vd: thiếu nước mắm) — hiện cả ở tab Đi chợ
+       * A household note for this meal (e.g. missing fish sauce), also shown on the Shopping tab
        */
       note: string | null;
     },

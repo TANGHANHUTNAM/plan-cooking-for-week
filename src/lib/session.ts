@@ -2,9 +2,9 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE = "pf_session";
-/** "Lưu đăng nhập": cookie sống 90 ngày */
+/** "Remember me": cookie lasts 90 days. */
 export const SESSION_MAX_AGE_S = 90 * 24 * 60 * 60;
-/** Token cũ hơn 30 ngày sẽ được ký lại ở proxy (sliding renewal) */
+/** Tokens older than 30 days are re-signed by the proxy (sliding renewal). */
 export const SESSION_RENEW_AFTER_S = 30 * 24 * 60 * 60;
 
 export interface SessionPayload {
@@ -62,14 +62,14 @@ export function sessionCookieOptions() {
   };
 }
 
-/** Đọc phiên hiện tại trong RSC / Server Action. */
+/** Read the current session in an RSC / Server Action. */
 export async function getSession(): Promise<SessionPayload | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return verifySessionToken(token);
 }
 
-/** Dùng trong Server Action sau khi đăng nhập thành công. */
+/** Use in a Server Action after successful sign-in. */
 export async function setSessionCookie(token: string): Promise<void> {
   (await cookies()).set(SESSION_COOKIE, token, sessionCookieOptions());
 }

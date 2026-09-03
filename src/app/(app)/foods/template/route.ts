@@ -6,7 +6,7 @@ import { MAX_IMPORT_ROWS } from "@/lib/import-foods";
 
 const HEADER_FILL = "FF38754A";
 
-/** Tải file Excel mẫu để nhập món ăn hàng loạt. */
+/** Download the Excel template for bulk food import. */
 export async function GET() {
   if (!(await getSession())) {
     return new Response("Chưa đăng nhập", { status: 401 });
@@ -54,7 +54,7 @@ export async function GET() {
     "Dòng ví dụ — thay bằng món của bạn",
   ]);
 
-  // dropdown Chính/Phụ + ràng buộc điểm yêu thích cho các dòng nhập liệu
+  // main/side dropdown + favorite-score constraints for input rows
   for (let r = 2; r <= MAX_IMPORT_ROWS + 1; r++) {
     sheet.getCell(`B${r}`).dataValidation = {
       type: "list",

@@ -13,8 +13,8 @@ const prisma = new PrismaClient({
 
 const ADMIN_PASSWORD = "admin123123!";
 
-/** Các thành viên gia đình — cùng mật khẩu, cùng thấy một thực đơn chung.
- *  (tài khoản admin thucdon@gmail.com đã được gỡ khỏi hệ thống theo yêu cầu 30/08) */
+/** Family members share one password and see one shared meal plan.
+ *  (The admin account was removed as requested on 30/08.) */
 const FAMILY_ACCOUNTS = [
   { email: "nam@gmail.com", name: "Nam" },
   { email: "khang@gmail.com", name: "Khang" },
@@ -34,7 +34,7 @@ type SeedFood = {
 };
 
 const FOODS: SeedFood[] = [
-  // ---- Món chính ----
+  // ---- Main dishes ----
   {
     name: "Thịt kho trứng",
     type: "MAIN",
@@ -127,7 +127,7 @@ const FOODS: SeedFood[] = [
     totalCooked: 8,
     lastCookedDaysAgo: 10,
   },
-  // ---- Món phụ ----
+  // ---- Side dishes ----
   {
     name: "Canh chua cá",
     type: "SIDE",
@@ -209,7 +209,7 @@ async function main() {
   for (const account of FAMILY_ACCOUNTS) {
     const user = await prisma.user.upsert({
       where: { email: account.email },
-      update: {}, // không ghi đè mật khẩu/tên nếu đã đổi
+      update: {}, // do not overwrite the password/name if it has already changed
       create: { email: account.email, name: account.name, passwordHash },
     });
     console.log(`✔ Thành viên: ${user.name} <${user.email}>`);

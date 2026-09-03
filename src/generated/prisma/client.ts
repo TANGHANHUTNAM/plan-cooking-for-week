@@ -53,12 +53,12 @@ export { Prisma };
 export type User = Prisma.UserModel;
 /**
  * Model ShoppingIngredientCheck
- * Có dòng = nguyên liệu đã mua trong tuần, dùng chung cho cả nhà.
+ * One row represents an ingredient bought for the week, shared by the household.
  */
 export type ShoppingIngredientCheck = Prisma.ShoppingIngredientCheckModel;
 /**
  * Model ShoppingExtra
- * Đồ mua thêm theo ngày, dùng chung cho cả nhà.
+ * Extra items for a given day, shared by the household.
  */
 export type ShoppingExtra = Prisma.ShoppingExtraModel;
 /**
@@ -83,7 +83,7 @@ export type MealPlan = Prisma.MealPlanModel;
 export type Meal = Prisma.MealModel;
 /**
  * Model MealAbsence
- * Một dòng = thành viên KHÔNG ăn bữa đó (mặc định ai cũng ăn)
+ * One row represents a member who does NOT eat the meal (everyone eats by default)
  */
 export type MealAbsence = Prisma.MealAbsenceModel;
 /**

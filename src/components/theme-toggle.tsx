@@ -12,7 +12,7 @@ const OPTIONS = [
 ] as const;
 
 const emptySubscribe = () => () => {};
-/** false lúc SSR, true sau khi mount — tránh lệch hydration khi đọc theme từ localStorage. */
+/** false during SSR, true after mount — avoids hydration mismatch when reading the theme from localStorage. */
 function useMounted(): boolean {
   return useSyncExternalStore(
     emptySubscribe,

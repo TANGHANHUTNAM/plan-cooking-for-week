@@ -21,7 +21,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { FoodTypeTile } from "@/components/food-type";
 import { ResponsiveSheet } from "@/components/responsive-sheet";
 
-/** "Kho, 4 nguyên liệu" — loại món đã có ô biểu tượng bên trái nên không nhắc lại. */
+/** "Pantry, 4 ingredients" — the food icon already appears on the left, so do not repeat it. */
 function rowDetail(data: ImportFoodData) {
   const parts = [data.cookingMethod];
   if (data.ingredients.length > 0) {

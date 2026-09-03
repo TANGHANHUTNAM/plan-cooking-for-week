@@ -38,7 +38,7 @@ async function loadCandidates(): Promise<CandidateFood[]> {
   }));
 }
 
-/** Random toàn bộ tuần (ghi đè thực đơn hiện có của tuần đó). */
+/** Randomize the entire week (overwrites the existing plan for that week). */
 export async function generateWeek(
   weekStart: string
 ): Promise<PlanActionResult> {
@@ -57,11 +57,11 @@ export async function generateWeek(
   });
 
   try {
-    // gom thành ít round-trip nhất có thể — DB ở xa (Supabase) dễ vượt timeout transaction
+    // minimize round trips — the remote Supabase DB can exceed the transaction timeout
     await prisma.$transaction(
       async (tx) => {
         const plan = await tx.mealPlan.upsert({
-          where: { weekStart: isoToDate(ws) }, // thực đơn chung cả nhà, unique theo tuần
+          where: { weekStart: isoToDate(ws) }, // shared household plan, unique per week
           update: {},
           create: { weekStart: isoToDate(ws) },
         });
@@ -107,7 +107,7 @@ export async function generateWeek(
   return {};
 }
 
-/** Copy nguyên thực đơn tuần trước sang tuần này (reset trạng thái đã nấu). */
+/** Copy the previous week's entire plan to this week (reset cooked state). */
 export async function copyLastWeek(
   weekStart: string
 ): Promise<PlanActionResult> {
@@ -168,7 +168,7 @@ export async function copyLastWeek(
   return {};
 }
 
-/** Bối cảnh 1 meal item: món đã dùng trong tuần và món cùng ngày (trừ chính nó). */
+/** Context for one meal item: foods used this week and foods on the same day (excluding itself). */
 async function loadItemContext(mealItemId: string) {
   const item = await prisma.mealItem.findUnique({
     where: { id: mealItemId },
@@ -195,7 +195,7 @@ async function loadItemContext(mealItemId: string) {
   return { item, used, sameDay };
 }
 
-/** Đổi 1 món bằng random thông minh. */
+/** Replace one food with a smart random choice. */
 export async function swapItemRandom(
   mealItemId: string
 ): Promise<PlanActionResult> {
@@ -206,7 +206,7 @@ export async function swapItemRandom(
   const pool = (await loadCandidates()).filter(
     (f) => f.type === ctx.item.position
   );
-  // tránh tuyệt đối: món hiện tại + món cùng ngày (kể cả khi pool cạn phải nới lỏng)
+  // absolute exclusions: the current food and foods on the same day (even when the pool must be relaxed)
   const avoid = new Set(ctx.sameDay);
   avoid.add(ctx.item.foodId);
 
@@ -227,7 +227,7 @@ export async function swapItemRandom(
   return {};
 }
 
-/** Chọn món thủ công cho 1 vị trí trong bữa. */
+/** Manually choose a food for one meal position. */
 export async function setItemFood(
   mealItemId: string,
   foodId: string
@@ -258,7 +258,7 @@ export interface SuggestionDTO {
   totalCooked: number;
 }
 
-/** Top 5 gợi ý theo điểm (rng cố định cho ổn định); pool cạn thì nới lỏng chỉ tránh món cùng ngày. */
+/** Top 5 suggestions by score (fixed rng for stability); when the pool is exhausted, relax constraints but still avoid foods from the same day. */
 async function topSuggestionDTOs(
   pool: CandidateFood[],
   used: ReadonlySet<string>,
@@ -291,7 +291,7 @@ async function topSuggestionDTOs(
   }));
 }
 
-/** Top 5 gợi ý phù hợp cho 1 vị trí (mục "Gợi ý phù hợp" trong sheet đổi món). */
+/** Top 5 suggestions for one position (the "Suggested matches" section in the swap sheet). */
 export async function suggestForItem(
   mealItemId: string
 ): Promise<{ error?: string; suggestions?: SuggestionDTO[] }> {
@@ -312,7 +312,7 @@ export async function suggestForItem(
   };
 }
 
-/** Bối cảnh 1 bữa: món của chính bữa đó, món đã dùng trong tuần và món cùng ngày. */
+/** Context for one meal: its own foods, foods used this week, and foods on the same day. */
 async function loadSlotContext(mealId: string) {
   const meal = await prisma.meal.findUnique({
     where: { id: mealId },
@@ -335,7 +335,7 @@ async function loadSlotContext(mealId: string) {
   return { meal, used, sameDay };
 }
 
-/** Bỏ món phụ khỏi một bữa — bữa nào cũng phải còn món chính. */
+/** Remove the side dish from a meal — every meal must keep its main dish. */
 export async function removeSideDish(
   mealItemId: string
 ): Promise<PlanActionResult> {
@@ -353,25 +353,43 @@ export async function removeSideDish(
   return {};
 }
 
-/** Thêm món phụ vào bữa đang trống — có foodId thì chọn tay, không thì random thông minh. */
-export async function addSideDish(
+type MealItemPosition = "MAIN" | "SIDE";
+
+function isMealItemPosition(value: unknown): value is MealItemPosition {
+  return value === "MAIN" || value === "SIDE";
+}
+
+function mealItemPositionLabel(position: MealItemPosition): string {
+  return position === "MAIN" ? "món chính" : "món phụ";
+}
+
+/** Add a food to an empty position — pass foodId for manual selection, otherwise choose smartly at random. */
+export async function addMealItem(
   mealId: string,
+  position: MealItemPosition,
   foodId?: string
 ): Promise<PlanActionResult> {
   await requireSession();
+  if (!isMealItemPosition(position)) {
+    return { error: "Vị trí món không hợp lệ" };
+  }
+
   const ctx = await loadSlotContext(mealId);
   if (!ctx) return { error: "Không tìm thấy bữa ăn" };
-  if (ctx.meal.items.some((it) => it.position === "SIDE")) {
-    return { error: "Bữa này đã có món phụ rồi" };
+  const positionLabel = mealItemPositionLabel(position);
+  if (ctx.meal.items.some((it) => it.position === position)) {
+    return { error: `Bữa này đã có ${positionLabel} rồi` };
   }
 
   let pickedId = foodId;
   if (pickedId) {
     const food = await prisma.food.findUnique({ where: { id: pickedId } });
     if (!food) return { error: "Không tìm thấy món" };
-    if (food.type !== "SIDE") return { error: "Món này không phải món phụ" };
+    if (food.type !== position) {
+      return { error: `Món này không phải ${positionLabel}` };
+    }
   } else {
-    const pool = (await loadCandidates()).filter((f) => f.type === "SIDE");
+    const pool = (await loadCandidates()).filter((f) => f.type === position);
     const picked = pickFood(pool, {
       usedIds: ctx.used,
       avoidIds: ctx.sameDay,
@@ -379,7 +397,7 @@ export async function addSideDish(
     });
     if (!picked) {
       return {
-        error: "Chưa có món phụ nào phù hợp — thêm món ở tab Món ăn nhé",
+        error: `Chưa có ${positionLabel} nào phù hợp — thêm món ở tab Món ăn nhé`,
       };
     }
     pickedId = picked.id;
@@ -387,31 +405,51 @@ export async function addSideDish(
 
   try {
     await prisma.mealItem.create({
-      data: { mealId, foodId: pickedId, position: "SIDE" },
+      data: { mealId, foodId: pickedId, position },
     });
   } catch {
-    return { error: "Bữa này đã có món phụ rồi" };
+    return { error: `Bữa này đã có ${positionLabel} rồi` };
   }
   revalidatePath("/", "layout");
   return {};
 }
 
-/** Top 5 món phụ gợi ý cho một bữa đang trống món phụ. */
-export async function suggestSideForMeal(
-  mealId: string
+/** Compatibility wrapper for existing side-dish add flows. */
+export async function addSideDish(
+  mealId: string,
+  foodId?: string
+): Promise<PlanActionResult> {
+  return addMealItem(mealId, "SIDE", foodId);
+}
+
+/** Top 5 suggestions for an empty position in a meal. */
+export async function suggestForMeal(
+  mealId: string,
+  position: MealItemPosition
 ): Promise<{ error?: string; suggestions?: SuggestionDTO[] }> {
   await requireSession();
+  if (!isMealItemPosition(position)) {
+    return { error: "Vị trí món không hợp lệ" };
+  }
+
   const ctx = await loadSlotContext(mealId);
   if (!ctx) return { error: "Không tìm thấy bữa ăn" };
-  const pool = (await loadCandidates()).filter((f) => f.type === "SIDE");
+  const pool = (await loadCandidates()).filter((f) => f.type === position);
   return { suggestions: await topSuggestionDTOs(pool, ctx.used, ctx.sameDay) };
 }
 
-// file "use server" chỉ được export async function — hằng này ở lại đây,
-// UI (meal-card) dùng maxLength=300 khớp tay
+/** Compatibility wrapper for the existing side-dish suggestion flow. */
+export async function suggestSideForMeal(
+  mealId: string
+): Promise<{ error?: string; suggestions?: SuggestionDTO[] }> {
+  return suggestForMeal(mealId, "SIDE");
+}
+
+// A "use server" file may export only async functions — keep this constant here,
+// the UI (meal-card) uses the matching maxLength=300
 const MEAL_NOTE_MAX = 300;
 
-/** Lưu ghi chú cho một bữa (vd: thiếu nước mắm) — chuỗi rỗng = xóa ghi chú. */
+/** Save a note for a meal (e.g. missing fish sauce) — an empty string clears the note. */
 export async function setMealNote(
   mealId: string,
   note: string
@@ -433,7 +471,7 @@ export async function setMealNote(
   return {};
 }
 
-/** Bật/tắt "không ăn" của một thành viên cho một bữa (có dòng = không ăn). */
+/** Toggle whether a member skips a meal (a row means the member is absent). */
 export async function toggleMealAbsence(
   mealId: string,
   userId: string
@@ -459,7 +497,7 @@ export async function toggleMealAbsence(
   return {};
 }
 
-/** Bấm "Đã nấu": ghi nhận thống kê cho cả 2 món trong bữa. */
+/** When "cooked" is pressed, record statistics for both foods in the meal. */
 export async function markCooked(mealId: string): Promise<PlanActionResult> {
   await requireSession();
   const meal = await prisma.meal.findUnique({
@@ -485,7 +523,7 @@ export async function markCooked(mealId: string): Promise<PlanActionResult> {
   return {};
 }
 
-/** Hoàn tác "Đã nấu": trừ thống kê và tính lại lần nấu gần nhất. */
+/** Undo "cooked": decrement statistics and recalculate the most recent cook time. */
 export async function undoCooked(mealId: string): Promise<PlanActionResult> {
   await requireSession();
   const meal = await prisma.meal.findUnique({

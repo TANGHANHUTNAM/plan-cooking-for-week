@@ -1,6 +1,6 @@
 /**
- * Trả về các tag mới chưa xuất hiện trong danh sách hiện tại.
- * So sánh không phân biệt hoa thường và cũng loại trùng trong cùng một lần nhập.
+ * Return new tags that are not already in the current list.
+ * Compare case-insensitively and remove duplicates from the same input.
  */
 export function appendUniqueTags(
   current: string[],

@@ -56,7 +56,7 @@ export default async function WeekPage({
         description="Bảy ngày, mỗi ngày một bữa trưa và một bữa tối. Bấm mũi tên đổi món bất kỳ."
       />
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <WeekSwitcher weekStart={weekStart} basePath="/week" />
         <div className="flex flex-1 gap-2 sm:flex-none">
           <GenerateWeekButton
@@ -91,7 +91,7 @@ export default async function WeekPage({
           />
         </EmptyState>
       ) : (
-        <div className="grid auto-rows-fr items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-7">
+        <div className="grid auto-rows-fr items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-7">
           {weekDaysISO(weekStart).map((dayISO, i) => {
             const dayMeals = mealsByDay.get(dayISO);
             return (

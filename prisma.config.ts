@@ -8,7 +8,7 @@ export default defineConfig({
     seed: "npx tsx prisma/seed.ts",
   },
   datasource: {
-    // CLI (migrate/seed) luôn đi đường kết nối trực tiếp — bắt buộc với Supabase
+    // CLI commands (migrate/seed) always use a direct connection — required by Supabase
     url: env("DIRECT_URL"),
   },
 });

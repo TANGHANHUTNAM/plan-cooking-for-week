@@ -4,11 +4,11 @@ import { useEffect, useState, useTransition } from "react";
 import { CircleSlash, Dices, Search, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 import {
-  addSideDish,
+  addMealItem,
   removeSideDish,
   setItemFood,
   suggestForItem,
-  suggestSideForMeal,
+  suggestForMeal,
   swapItemRandom,
   type SuggestionDTO,
 } from "@/actions/plans";
@@ -77,9 +77,9 @@ function FoodOption({
 }
 
 /**
- * Bottom sheet cho một vị trí món trong bữa.
- * - item != null: đổi món đang có (món phụ có thêm lựa chọn "bỏ món phụ").
- * - item == null: bữa đang trống món phụ -> thêm mới (random / gợi ý / chọn tay).
+ * Bottom sheet for one food position in a meal.
+ * - item != null: replace the existing food (side dishes also offer "remove side dish").
+ * - item == null: empty position -> add a food (random / suggested / manual).
  */
 export function SwapSheet({
   mealId,
@@ -103,17 +103,19 @@ export function SwapSheet({
   const positionLabel = position === "MAIN" ? "món chính" : "món phụ";
   const isAddMode = item === null;
 
-  // component được mount mới mỗi lần mở sheet nên chỉ cần fetch 1 lần
+  // the component mounts anew each time the sheet opens, so fetch only once
   useEffect(() => {
     let cancelled = false;
-    const load = item ? suggestForItem(item.id) : suggestSideForMeal(mealId);
+    const load = item
+      ? suggestForItem(item.id)
+      : suggestForMeal(mealId, position);
     load.then((res) => {
       if (!cancelled) setSuggestions(res.suggestions ?? []);
     });
     return () => {
       cancelled = true;
     };
-  }, [item, mealId]);
+  }, [item, mealId, position]);
 
   const pool = foods.filter(
     (f) => f.type === position && f.id !== item?.food.id
@@ -136,16 +138,16 @@ export function SwapSheet({
     startTransition(async () => {
       const res = item
         ? await swapItemRandom(item.id)
-        : await addSideDish(mealId);
+        : await addMealItem(mealId, position);
       if (res.error) toast.error(res.error);
-      else done(item ? "Đã đổi sang món khác" : "Đã thêm món phụ");
+      else done(item ? "Đã đổi sang món khác" : `Đã thêm ${positionLabel}`);
     });
 
   const onPick = (foodId: string, name: string) =>
     startTransition(async () => {
       const res = item
         ? await setItemFood(item.id, foodId)
-        : await addSideDish(mealId, foodId);
+        : await addMealItem(mealId, position, foodId);
       if (res.error) toast.error(res.error);
       else done(isAddMode ? `Đã thêm “${name}”` : `Đã đổi sang “${name}”`);
     });
@@ -169,10 +171,10 @@ export function SwapSheet({
           iconClassName="size-4"
         />
       }
-      title={isAddMode ? "Thêm món phụ" : `Đổi ${positionLabel}`}
+      title={isAddMode ? `Thêm ${positionLabel}` : `Đổi ${positionLabel}`}
       description={
         isAddMode ? (
-          "Bữa này đang chưa có món phụ."
+          `Bữa này đang chưa có ${positionLabel}.`
         ) : (
           <>
             Đang là{" "}
@@ -192,7 +194,7 @@ export function SwapSheet({
           className="h-11 w-full text-sm font-semibold"
         >
           {pending ? <Spinner /> : <Dices />}
-          {isAddMode ? "Random món phụ" : "Random món khác"}
+          {isAddMode ? `Random ${positionLabel}` : "Random món khác"}
         </Button>
 
         <section>

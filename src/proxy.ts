@@ -7,7 +7,7 @@ import {
   verifySessionToken,
 } from "@/lib/session";
 
-// Chặn toàn bộ app sau đăng nhập; /login là route công khai duy nhất.
+// Protect the entire app after sign-in; /login is the only public route.
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE)?.value;
@@ -24,7 +24,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Sliding renewal: còn dùng app thì phiên không bao giờ hết hạn
+  // Sliding renewal: the session never expires while the app is in use
   const ageS = Math.floor(Date.now() / 1000) - session.iat;
   if (ageS > SESSION_RENEW_AFTER_S) {
     const fresh = await createSessionToken({
@@ -42,7 +42,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Bỏ qua asset tĩnh; mọi trang đều qua kiểm tra phiên
+    // Skip static assets; every page still goes through session checks
     "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|manifest.webmanifest|icons/).*)",
   ],
 };

@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-// khớp breakpoint `lg` của Tailwind — nơi sidebar thay bottom nav
+// matches Tailwind's `lg` breakpoint, where the sidebar replaces the bottom nav
 const QUERY = "(min-width: 1024px)";
 
 function subscribe(onChange: () => void) {
@@ -11,7 +11,7 @@ function subscribe(onChange: () => void) {
   return () => mql.removeEventListener("change", onChange);
 }
 
-/** true khi viewport cỡ desktop; false trong lúc SSR. */
+/** true for a desktop-sized viewport; false during SSR. */
 export function useIsDesktop(): boolean {
   return useSyncExternalStore(
     subscribe,

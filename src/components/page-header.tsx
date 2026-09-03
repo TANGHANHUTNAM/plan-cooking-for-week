@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Tiêu đề trang: một dòng tên trang, một dòng mô tả ngắn, hành động bên phải.
- * Mô tả nói rõ trang này dùng để làm gì thay vì nhãn trang trí phía trên.
+ * Page title: one line for the name, one short description, and actions on the right.
+ * The description explains the page's purpose instead of acting as a decorative label.
  */
 export function PageHeader({
   title,
@@ -19,7 +19,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 lg:mb-6",
+        "mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 border-b border-border/70 pb-5 lg:mb-8 lg:pb-6",
         className
       )}
     >
@@ -40,7 +40,7 @@ export function PageHeader({
   );
 }
 
-/** Tiêu đề của một khối trong trang — nhỏ hơn tiêu đề trang một bậc. */
+/** Section heading — one step smaller than the page title. */
 export function SectionHeading({
   children,
   meta,

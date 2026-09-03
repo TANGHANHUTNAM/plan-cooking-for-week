@@ -1,7 +1,7 @@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Mức yêu thích vẽ bằng sao thay vì con số — đọc lướt được ngay. */
+/** Show the favorite level with stars instead of a number — easy to scan at a glance. */
 export function RatingStars({
   value,
   className,
