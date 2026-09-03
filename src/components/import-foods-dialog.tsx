@@ -99,7 +99,7 @@ export function ImportFoodsDialog({
       <div className="flex flex-col gap-5">
         {rows === null ? (
           <>
-            <ol className="flex flex-col gap-2.5 text-sm text-muted-foreground">
+            <ol className="flex flex-col gap-3 text-sm/6 text-muted-foreground">
               {[
                 <>
                   Tải file mẫu về, điền món vào sheet{" "}
@@ -113,7 +113,7 @@ export function ImportFoodsDialog({
                 <>Chọn file để xem trước. Món đã có sẵn sẽ tự bỏ qua.</>,
               ].map((text, i) => (
                 <li key={i} className="flex gap-2.5">
-                  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-bold tabular-nums text-secondary-foreground">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-secondary text-xs font-bold tabular-nums text-secondary-foreground">
                     {i + 1}
                   </span>
                   <span className="min-w-0 flex-1 pt-px">{text}</span>
@@ -158,16 +158,16 @@ export function ImportFoodsDialog({
         ) : (
           <>
             <div className="flex flex-wrap gap-1.5">
-              <Badge variant="secondary" className="h-6 px-2.5">
+              <Badge variant="secondary" className="h-7 px-3">
                 {validRows.length} món sẽ nhập
               </Badge>
               {duplicateCount > 0 ? (
-                <Badge variant="outline" className="h-6 px-2.5">
+                <Badge variant="outline" className="h-7 px-3">
                   {duplicateCount} món đã có
                 </Badge>
               ) : null}
               {errorCount > 0 ? (
-                <Badge variant="destructive" className="h-6 px-2.5">
+                <Badge variant="destructive" className="h-7 px-3">
                   {errorCount} dòng lỗi
                 </Badge>
               ) : null}

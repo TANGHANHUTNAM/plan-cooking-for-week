@@ -21,9 +21,9 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="relative z-40 shrink-0 border-t border-border bg-card/90 backdrop-blur-lg lg:hidden"
+      className="relative z-40 shrink-0 border-t border-border bg-card/95 backdrop-blur-lg lg:hidden"
     >
-      <div className="mx-auto grid w-full max-w-lg grid-cols-5 gap-1 px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
+      <div className="mx-auto grid w-full max-w-lg grid-cols-5 gap-1 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
         {APP_TABS.map(({ href, label, icon: Icon }) => {
           const active = isTabActive(href, pathname);
           return (
@@ -35,7 +35,7 @@ export function BottomNav() {
             >
               <span
                 className={cn(
-                  "relative grid h-7 w-14 place-items-center rounded-full transition-colors",
+                  "relative grid h-8 w-14 place-items-center rounded-full transition-colors",
                   active
                     ? "bg-secondary text-primary"
                     : "text-muted-foreground group-hover:text-foreground"
@@ -45,7 +45,7 @@ export function BottomNav() {
               </span>
               <span
                 className={cn(
-                  "truncate text-xs leading-none",
+                  "truncate text-[13px] leading-none",
                   active
                     ? "font-semibold text-foreground"
                     : "font-medium text-muted-foreground"

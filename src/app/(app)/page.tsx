@@ -90,9 +90,9 @@ export default async function TodayPage() {
           />
         </EmptyState>
       ) : (
-        <div className="flex flex-col gap-4">
-          <Card size="sm" className="border-l-4 border-l-primary/60">
-            <CardContent className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-col gap-5">
+          <Card size="sm" className="border-l-4 border-l-primary/60 bg-card/90">
+            <CardContent className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
               <div className="w-full min-w-[12rem] sm:w-80">
                 <p className="text-sm font-medium">
                   Tuần này đã nấu{" "}
@@ -117,7 +117,7 @@ export default async function TodayPage() {
             </CardContent>
           </Card>
 
-          <div className="grid auto-rows-fr items-stretch gap-5 md:grid-cols-2">
+          <div className="grid auto-rows-fr items-stretch gap-6 md:grid-cols-2">
             {lunch ? (
               <MealCard meal={lunch} members={memberDTOs} variant="full" />
             ) : (

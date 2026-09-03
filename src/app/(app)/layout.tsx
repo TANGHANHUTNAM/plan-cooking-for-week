@@ -10,7 +10,7 @@ export default function AppLayout({
       {/* Each page sets its own content width (mx-auto max-w-*) to keep the layout balanced */}
       <main
         id="app-main"
-        className="min-h-0 w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:overflow-visible lg:px-10 lg:pb-14 lg:pt-10"
+        className="min-h-0 w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:overflow-visible lg:px-12 lg:pb-16 lg:pt-12"
       >
         {children}
       </main>

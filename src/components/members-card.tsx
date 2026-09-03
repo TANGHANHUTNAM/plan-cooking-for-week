@@ -81,12 +81,12 @@ export function MembersCard({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ItemGroup className="gap-1">
+        <ItemGroup className="gap-1.5">
           {members.map((member) => (
-            <Item key={member.id} size="xs" className="px-0">
+            <Item key={member.id} size="sm" className="px-0">
               <ItemMedia>
                 <Avatar size="sm">
-                  <AvatarFallback className="bg-secondary text-xs font-semibold text-primary">
+                  <AvatarFallback className="bg-secondary text-sm font-semibold text-primary">
                     {member.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -95,7 +95,7 @@ export function MembersCard({
                 <ItemTitle>
                   {member.name}
                   {member.id === currentUserId ? (
-                    <span className="text-xs font-normal text-primary">
+                    <span className="text-[13px] font-normal text-primary">
                       (bạn)
                     </span>
                   ) : null}

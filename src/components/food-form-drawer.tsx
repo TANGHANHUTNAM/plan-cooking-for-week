@@ -104,7 +104,7 @@ function FoodForm({
       <input type="hidden" name="type" value={type} />
       <input type="hidden" name="favoriteScore" value={stars} />
 
-      <FieldGroup className="gap-4">
+      <FieldGroup className="gap-5">
         <Field>
           <FieldLabel htmlFor="food-name" className="text-sm">
             Tên món
@@ -115,7 +115,7 @@ function FoodForm({
             defaultValue={food?.name ?? ""}
             placeholder="Ví dụ: Thịt kho trứng"
             required
-            className="h-11 text-base md:text-sm"
+            className="h-11 text-base"
           />
         </Field>
 
@@ -137,7 +137,7 @@ function FoodForm({
                   key={val}
                   value={val}
                   size="lg"
-                  className="h-11 flex-1 gap-2 px-3 text-sm font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"
+                  className="h-11 flex-1 gap-2 px-3.5 text-sm font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"
                 >
                   <Icon className="size-4" />
                   {label}
@@ -208,7 +208,7 @@ function FoodForm({
             defaultValue={food?.note ?? ""}
             placeholder="Ví dụ: kho lửa nhỏ 45 phút"
             rows={2}
-            className="text-base md:text-sm"
+            className="text-base"
           />
         </Field>
 
