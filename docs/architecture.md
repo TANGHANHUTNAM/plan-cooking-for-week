@@ -6,7 +6,7 @@
 
 - Next.js 16.3.3 App Router with React 19, TypeScript, Tailwind CSS v4, shared shadcn/Radix UI components, Lucide icons, and Sonner toasts.
 - `src/app/layout.tsx` owns document metadata, Vietnamese font loading, theme provider, tooltip provider, and toaster. The authenticated shell is `src/app/(app)/layout.tsx`.
-- `/login` is public. `/`, `/week`, `/foods`, `/shopping`, and `/settings` are the app routes. `src/app/(app)/foods/template/route.ts` generates the Excel template.
+- `/login` is public. `/`, `/week`, `/foods`, `/shopping`, `/analytics`, and `/settings` are the app routes. `src/app/(app)/foods/template/route.ts` generates the Excel template.
 - `src/proxy.ts` guards the matched app routes and redirects unauthenticated requests to `/login`; an authenticated `/login` request redirects to `/`.
 
 ## Ownership map
@@ -19,6 +19,7 @@
 | Reads and DTO serialization               | `src/lib/queries.ts`, `src/lib/dto.ts`                              |
 | Session and date/week rules               | `src/lib/session.ts`, `src/lib/week.ts`                             |
 | Random selection and shopping aggregation | `src/lib/random-engine.ts`, `src/lib/shopping.ts`                   |
+| Statistics aggregation                    | `src/lib/analytics.ts`                                              |
 | Shared validation                         | `src/lib/validations.ts`                                            |
 | Persistence                               | `prisma/schema.prisma`, `prisma/migrations/`                        |
 | Runtime Prisma client                     | `src/lib/prisma.ts` and generated output in `src/generated/prisma/` |
@@ -58,6 +59,14 @@ Both whole-week writes snapshot the plan they are about to destroy: the current 
 
 `markCooked` stores one meal-level completion timestamp and updates statistics for every item in that meal. `undoCooked` reverses the counts and recalculates each affected food’s latest cooked timestamp. `src/lib/shopping.ts` aggregates duplicate ingredient names with the same normalized case-insensitive key. Shopping checks persist in `shopping_ingredient_checks` by selected `weekStart` (no `localStorage`); the current-week default is “Tối nay và trưa mai”, including the next week’s lunch when the boundary is Sunday. The `Mua thêm` list persists shared `shopping_extras` by calendar date and is shown only for dates in the active scope.
 
+## Statistics page
+
+`/analytics` reads whole tables through `getAnalyticsData()` and does every calculation in `src/lib/analytics.ts`, which is pure and unit-tested: a household keeps tens of dishes and a handful of weeks, so one read plus in-memory aggregation stays cheaper and far easier to test than a dozen grouped SQL queries. Revisit that trade only if the meal table grows by orders of magnitude.
+
+The page splits its visuals by what each form needs. Column charts (cooking methods, star buckets, cooked-vs-remaining per week) use Recharts through the shadcn `chart.tsx` wrapper; rankings, the weekday x meal heatmap, the part-to-whole bar and the "waiting longest" list are plain server-rendered CSS, because long Vietnamese dish names do not fit a chart library's category axis on a phone and those panels then ship no JavaScript at all.
+
+Chart colours are the `--viz-*` tokens in `globals.css`, not the interface tokens. They were run through a data-visualization validator (lightness band, chroma floor, colour-vision separation, contrast against the card surface) per mode: `--viz-fill` alone for a single series, `--viz-fill` with `--viz-alt` for the validated two-series pair, `--viz-track` as the lighter step of `--viz-fill` for part-to-whole tracks, and `--viz-heat-0..5` for the heatmap ramp. The lunch/dinner chip colours were rejected for charts because that teal/slate pair sits below the normal-vision separation floor; on the cards it is safe only because an icon and a label always accompany it. Every chart also labels its values directly, so no number is reachable only by hovering.
+
 ## Intentional differences and extensions from `spec.md`
 
 These are current implementation decisions, not future work:
@@ -67,6 +76,7 @@ These are current implementation decisions, not future work:
 - The meal plan is household-shared rather than user-owned, with multiple family accounts and per-meal absence marking.
 - “Đã nấu” is meal-level (`Meal.cookedAt`) and updates all dishes in that meal. `favoriteScore` is the 0–5 favorite/rating field.
 - Side dishes are optional per meal, meal notes are supported, and Excel import, theme selection, and member management (create an account for another member, delete anyone except yourself) are implemented additions.
+- The `Thống kê` page is an addition beyond `spec.md`; it only reads existing data and adds no tables of its own.
 - Whole-week randomize/copy is undoable: `plan_snapshots` holds recent versions of a week, the success toast offers `Hoàn tác`, and `Lịch sử` on the week page lists saved versions day by day for restoring. The spec did not ask for plan history; it exists because a mis-tapped `Random tuần` used to discard hand-edited days permanently.
 
 When a behavior changes, update the relevant source first, then this document if the decision is durable. Do not copy implementation plans, credentials, or historical status into the design standard.

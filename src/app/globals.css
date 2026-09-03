@@ -94,6 +94,20 @@
   --chart-3: oklch(0.62 0.1 190);
   --chart-4: oklch(0.53 0.08 255);
   --chart-5: oklch(0.48 0.02 250);
+  /* Thống kê palette. Plain hex, not the oklch tokens above: these steps were run
+     through the data-viz validator (lightness band, chroma floor, colour-vision
+     separation, contrast on the card surface) and must not drift. --viz-fill is one
+     series on its own, --viz-fill + --viz-alt is the validated two-series pair, and
+     --viz-track is the lighter step of --viz-fill for part-to-whole tracks. */
+  --viz-fill: #036d3d;
+  --viz-track: #8ec2a0;
+  --viz-alt: #c07b00;
+  --viz-heat-0: oklch(0.96 0.004 250);
+  --viz-heat-1: #d9eedf;
+  --viz-heat-2: #b3ddc0;
+  --viz-heat-3: #7cbc92;
+  --viz-heat-4: #419363;
+  --viz-heat-5: #036d3d;
   --radius: 0.75rem;
   /* Keep the sidebar just below the canvas so cards and active navigation stay distinct. */
   --sidebar: oklch(0.965 0.006 250);
@@ -136,6 +150,16 @@
   --chart-3: oklch(0.72 0.09 190);
   --chart-4: oklch(0.72 0.085 255);
   --chart-5: oklch(0.94 0.006 250);
+  /* Dark steps are chosen for the dark card surface, not flipped from light. */
+  --viz-fill: #46a16b;
+  --viz-track: #2a583c;
+  --viz-alt: #c77618;
+  --viz-heat-0: oklch(0.245 0.012 250);
+  --viz-heat-1: #182c1f;
+  --viz-heat-2: #20462f;
+  --viz-heat-3: #266741;
+  --viz-heat-4: #358356;
+  --viz-heat-5: #46a16b;
   --sidebar: oklch(0.14 0.014 250);
   --sidebar-foreground: oklch(0.94 0.006 250);
   --sidebar-primary: oklch(0.68 0.105 155);

@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  ChartColumn,
   CookingPot,
   House,
   Settings,
@@ -18,6 +19,7 @@ export const APP_TABS: AppTab[] = [
   { href: "/week", label: "Lịch tuần", icon: CalendarDays },
   { href: "/foods", label: "Món ăn", icon: CookingPot },
   { href: "/shopping", label: "Đi chợ", icon: ShoppingBasket },
+  { href: "/analytics", label: "Thống kê", icon: ChartColumn },
   { href: "/settings", label: "Cài đặt", icon: Settings },
 ];
 

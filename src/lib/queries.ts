@@ -93,6 +93,48 @@ export async function getAllFoods() {
 
 export type FoodWithMeta = Awaited<ReturnType<typeof getAllFoods>>[number];
 
+/**
+ * Every row the Thống kê page aggregates. The household keeps tens of dishes and a
+ * handful of weeks, so reading them whole and aggregating in `src/lib/analytics.ts`
+ * stays cheaper than a dozen grouped queries.
+ */
+export async function getAnalyticsData() {
+  const [foods, meals] = await Promise.all([
+    prisma.food.findMany({
+      select: {
+        name: true,
+        type: true,
+        cookingMethod: true,
+        favoriteScore: true,
+        ingredients: { select: { name: true } },
+        statistic: { select: { totalCooked: true, lastCookedAt: true } },
+      },
+    }),
+    prisma.meal.findMany({
+      orderBy: [{ date: "asc" }, { period: "asc" }],
+      select: {
+        date: true,
+        period: true,
+        cookedAt: true,
+        note: true,
+        mealPlan: { select: { weekStart: true } },
+        items: {
+          select: { position: true, food: { select: { cookingMethod: true } } },
+        },
+        absences: { select: { userId: true } },
+      },
+    }),
+  ]);
+
+  return {
+    foods,
+    meals: meals.map(({ mealPlan, ...meal }) => ({
+      ...meal,
+      weekStart: mealPlan.weekStart,
+    })),
+  };
+}
+
 /** Household members, ordered by account creation. */
 export async function getMembers() {
   return prisma.user.findMany({
