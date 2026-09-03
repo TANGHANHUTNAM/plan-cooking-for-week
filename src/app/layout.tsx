@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app-info";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const beVietnam = Be_Vietnam_Pro({
+const manrope = Manrope({
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
+  weight: "variable",
   variable: "--font-sans",
   display: "swap",
 });
@@ -32,8 +32,14 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f9faf7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d1511" },
+    {
+      media: "(prefers-color-scheme: light)",
+      color: "oklch(0.985 0.004 250)",
+    },
+    {
+      media: "(prefers-color-scheme: dark)",
+      color: "oklch(0.17 0.015 250)",
+    },
   ],
 };
 
@@ -42,7 +48,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     // suppressHydrationWarning: next-themes adds .dark to <html> before hydration
-    <html lang="vi" className={beVietnam.variable} suppressHydrationWarning>
+    <html lang="vi" className={manrope.variable} suppressHydrationWarning>
       <body className="bg-background font-sans text-foreground antialiased">
         <ThemeProvider
           attribute="class"

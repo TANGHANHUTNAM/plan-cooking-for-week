@@ -44,7 +44,7 @@ import {
 import { FoodTypeIcon } from "@/components/food-type";
 import { SwapSheet } from "@/components/swap-sheet";
 
-/** Lunch uses amber, dinner uses indigo — the color makes the meal obvious at a glance. */
+/** Lunch uses teal/cyan, dinner uses slate/blue — the color makes the meal obvious at a glance. */
 const PERIOD_META = {
   LUNCH: {
     label: "Trưa",
