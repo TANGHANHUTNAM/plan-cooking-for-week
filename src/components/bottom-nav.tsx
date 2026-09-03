@@ -21,11 +21,11 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="relative z-40 shrink-0 border-t border-border bg-card/90 backdrop-blur-lg lg:hidden"
+      className="relative z-40 shrink-0 border-t border-border bg-card/95 backdrop-blur-lg lg:hidden"
     >
       {/* six tabs: the pill grows with its column instead of a fixed width, so the
           labels still fit on a 320px phone */}
-      <div className="mx-auto grid w-full max-w-lg grid-cols-6 gap-0.5 px-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
+      <div className="mx-auto grid w-full max-w-lg grid-cols-6 gap-0.5 px-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
         {APP_TABS.map(({ href, label, icon: Icon }) => {
           const active = isTabActive(href, pathname);
           return (
@@ -37,7 +37,7 @@ export function BottomNav() {
             >
               <span
                 className={cn(
-                  "relative grid h-7 w-full max-w-14 place-items-center rounded-full transition-colors",
+                  "relative grid h-8 w-full max-w-14 place-items-center rounded-full transition-colors",
                   active
                     ? "bg-secondary text-primary"
                     : "text-muted-foreground group-hover:text-foreground"
@@ -47,8 +47,9 @@ export function BottomNav() {
               </span>
               <span
                 className={cn(
-                  // 10px keeps every label whole on a 320px phone
-                  "w-full truncate text-center text-[10px] leading-none min-[360px]:text-[11px]",
+                  // six labels only fit at 10px on a 320px phone; they grow back
+                  // toward the 13px the design uses as soon as there is room
+                  "w-full truncate text-center text-[10px] leading-none min-[360px]:text-[11px] min-[400px]:text-xs",
                   active
                     ? "font-semibold text-foreground"
                     : "font-medium text-muted-foreground"

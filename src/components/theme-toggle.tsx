@@ -34,14 +34,14 @@ export function ThemeToggle() {
       variant="outline"
       spacing={0}
       aria-label="Chế độ giao diện"
-      className="h-10 w-full"
+      className="h-11 w-full"
     >
       {OPTIONS.map(({ value, label, icon: Icon }) => (
         <ToggleGroupItem
           key={value}
           value={value}
           size="lg"
-          className="h-10 flex-1 gap-1.5 px-3 text-[13px] font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"
+          className="h-11 flex-1 gap-1.5 px-3 text-sm font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"
         >
           <Icon />
           {label}

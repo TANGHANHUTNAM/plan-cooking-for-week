@@ -378,7 +378,7 @@ export function ShoppingScreen({
               <ToggleGroupItem
                 value={EVENING_SCOPE}
                 ref={scope === EVENING_SCOPE ? activeChipRef : undefined}
-                className="h-11 rounded-full px-4 text-xs font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
+                className="h-11 rounded-full px-4 text-sm font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
               >
                 Tối nay và trưa mai
               </ToggleGroupItem>
@@ -386,7 +386,7 @@ export function ShoppingScreen({
             <ToggleGroupItem
               value={WEEK_SCOPE}
               ref={scope === WEEK_SCOPE ? activeChipRef : undefined}
-              className="h-11 rounded-full px-4 text-xs font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
+              className="h-11 rounded-full px-4 text-sm font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
             >
               Cả tuần
             </ToggleGroupItem>
@@ -395,7 +395,7 @@ export function ShoppingScreen({
                 key={day}
                 value={day}
                 ref={scope === day ? activeChipRef : undefined}
-                className="h-11 rounded-full px-4 text-xs font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
+                className="h-11 rounded-full px-4 text-sm font-medium data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground lg:h-9"
               >
                 {day === today ? "Hôm nay" : DAY_LABELS_SHORT[i]}
               </ToggleGroupItem>
@@ -434,7 +434,7 @@ export function ShoppingScreen({
           {missingTomorrowLunch ? (
             <Alert>
               <Info />
-              <AlertDescription>
+              <AlertDescription className="text-sm/6">
                 Trưa mai chưa có trong thực đơn vì tuần sau chưa được tạo. Danh
                 sách này mới gồm đồ cho bữa tối nay.
               </AlertDescription>
@@ -456,7 +456,7 @@ export function ShoppingScreen({
                   aria-label={`Đã mua ${done} trên ${entries.length} nguyên liệu`}
                   className="mt-2 h-1.5"
                 />
-                <p className="mt-1.5 text-xs text-muted-foreground">
+                <p className="mt-2 text-[13px] text-muted-foreground">
                   Danh sách cho {scopeLabel}
                 </p>
               </div>
@@ -549,7 +549,7 @@ export function ShoppingScreen({
         </div>
       )}
 
-      <Card size="sm" className="mt-5">
+      <Card size="sm" className="mt-6">
         <CardHeader className="gap-1.5 border-b">
           <CardTitle className="flex items-center gap-2 text-base">
             <Plus className="size-4 text-primary" />
@@ -566,7 +566,7 @@ export function ShoppingScreen({
             className="flex flex-col gap-2.5 sm:flex-row sm:items-end"
           >
             <div className="min-w-0 flex-1">
-              <Label htmlFor="extra-name" className="mb-1.5 text-xs">
+              <Label htmlFor="extra-name" className="mb-1.5 text-sm">
                 Tên đồ mua thêm
               </Label>
               <Input
@@ -581,7 +581,7 @@ export function ShoppingScreen({
             </div>
             <div className="flex gap-2 sm:shrink-0">
               <div className="min-w-0 flex-1 sm:w-40 sm:flex-none">
-                <Label htmlFor="extra-date" className="mb-1.5 text-xs">
+                <Label htmlFor="extra-date" className="mb-1.5 text-sm">
                   Ngày mua
                 </Label>
                 <Select
@@ -592,7 +592,7 @@ export function ShoppingScreen({
                   <SelectTrigger
                     id="extra-date"
                     size="lg"
-                    className="h-11 w-full text-[13px] lg:h-9"
+                    className="h-11 w-full text-sm lg:h-9"
                   >
                     <SelectValue />
                   </SelectTrigger>
@@ -618,7 +618,7 @@ export function ShoppingScreen({
           </form>
 
           {visibleExtras.length === 0 ? (
-            <p className="mt-4 rounded-md border border-dashed px-3 py-3 text-xs text-muted-foreground">
+            <p className="mt-5 rounded-lg border border-dashed px-3.5 py-3.5 text-sm text-muted-foreground">
               Chưa có món mua thêm trong phạm vi này.
             </p>
           ) : (
@@ -631,7 +631,7 @@ export function ShoppingScreen({
                 return (
                   <div key={dateISO}>
                     <div className="mb-1.5 flex items-baseline gap-2">
-                      <h3 className="text-xs font-semibold">
+                      <h3 className="text-sm font-semibold">
                         {dateLabel(dateISO)}
                       </h3>
                       <span className="text-[11px] tabular-nums text-muted-foreground">
@@ -691,7 +691,7 @@ export function ShoppingScreen({
       </Card>
 
       {meals.length > 0 ? (
-        <p className="mt-4 text-xs text-muted-foreground">
+        <p className="mt-5 text-[13px] text-muted-foreground">
           Nguyên liệu dùng chung giữa các món chỉ cần tick một lần là gạch ở mọi
           chỗ. Các dấu tick được lưu chung trong nhà, theo từng tuần.
         </p>

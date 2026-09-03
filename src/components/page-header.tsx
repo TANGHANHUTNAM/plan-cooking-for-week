@@ -19,7 +19,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 border-b border-border/70 pb-5 lg:mb-8 lg:pb-6",
+        "mb-7 flex flex-wrap items-start justify-between gap-x-5 gap-y-4 border-b border-border/70 pb-6 lg:mb-9 lg:pb-7",
         className
       )}
     >
@@ -28,7 +28,7 @@ export function PageHeader({
           {title}
         </h1>
         {description ? (
-          <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+          <p className="mt-1.5 max-w-prose text-sm/6 text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -51,7 +51,7 @@ export function SectionHeading({
   className?: string;
 }) {
   return (
-    <div className={cn("mb-2.5 flex items-baseline gap-2", className)}>
+    <div className={cn("mb-3 flex items-baseline gap-2", className)}>
       <h2 className="font-heading text-base font-semibold tracking-[-0.01em]">
         {children}
       </h2>

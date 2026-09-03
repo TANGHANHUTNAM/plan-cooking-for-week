@@ -42,7 +42,7 @@ export function TagInput({
             type="button"
             aria-label={`Xóa nguyên liệu ${tag}`}
             onClick={() => onChange(value.filter((v) => v !== tag))}
-            className="group/tag-remove absolute top-1/2 right-[-0.5rem] z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring lg:right-0 lg:size-6"
+            className="group/tag-remove absolute top-1/2 right-[-0.5rem] z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring lg:right-0 lg:size-8"
           >
             <span className="grid size-4 place-items-center rounded-full transition-colors group-hover/tag-remove:bg-foreground/10">
               <X className="size-3" />

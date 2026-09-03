@@ -77,11 +77,11 @@ export function PeriodChip({
         "inline-flex w-fit items-center gap-1.5 rounded-full font-semibold",
         "border border-current/10",
         chip,
-        size === "full" ? "px-2.5 py-1 text-[13px]" : "px-2 py-0.5 text-[11px]"
+        size === "full" ? "px-3 py-1.5 text-sm" : "px-2.5 py-1 text-xs"
       )}
     >
       <Icon
-        className={size === "full" ? "size-3.5" : "size-3"}
+        className={size === "full" ? "size-4" : "size-3.5"}
         strokeWidth={2.4}
       />
       {label}
@@ -138,7 +138,7 @@ function DishRow({
         <p
           className={cn(
             "mt-0.5 truncate text-muted-foreground",
-            size === "full" ? "text-sm" : "text-xs"
+            size === "full" ? "text-sm" : "text-[13px]"
           )}
         >
           {method}
@@ -153,7 +153,7 @@ function DishRow({
             onClick={onSwap}
             className={cn(
               "-mr-1 size-11 shrink-0 text-muted-foreground hover:text-foreground",
-              size === "full" ? "lg:size-7" : "lg:size-6"
+              "lg:size-8"
             )}
           >
             <ArrowLeftRight />
@@ -179,7 +179,7 @@ function EmptyDishRow({
     "flex w-full items-center gap-2.5 rounded-md border border-dashed border-border text-left text-muted-foreground",
     size === "full" ? "px-3 py-2.5" : "px-2.5 py-2"
   );
-  const text = cn("font-medium", size === "full" ? "text-sm" : "text-[13px]");
+  const text = cn("font-medium", size === "full" ? "text-sm" : "text-sm");
 
   return (
     <button
@@ -364,13 +364,13 @@ export function MealCard({
       <button
         type="button"
         onClick={() => setNoteDraft(meal.note ?? "")}
-        className="flex min-h-11 w-full items-start gap-2 rounded-md bg-warm-surface px-3 py-2 text-left outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
+        className="flex min-h-11 w-full items-start gap-2.5 rounded-lg bg-warm-surface px-3.5 py-2.5 text-left outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
       >
         <StickyNote className="mt-px size-3.5 shrink-0 text-warm" />
         <span
           className={cn(
             "min-w-0 flex-1 whitespace-pre-wrap text-warm-foreground",
-            isFull ? "text-sm" : "text-xs"
+            isFull ? "text-sm" : "text-[13px]"
           )}
         >
           {meal.note}
@@ -380,7 +380,7 @@ export function MealCard({
       <button
         type="button"
         onClick={() => setNoteDraft("")}
-        className="-mx-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 py-2 text-[13px] font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring lg:mx-0 lg:min-h-0 lg:px-0 lg:py-0"
+        className="-mx-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring lg:mx-0 lg:min-h-0 lg:px-0 lg:py-0"
       >
         <StickyNote className="size-3.5" />
         Thêm ghi chú cho bữa này
@@ -403,7 +403,7 @@ export function MealCard({
     return (
       <div
         className={cn(
-          "flex flex-col gap-2.5 rounded-xl p-3 ring-1 ring-inset ring-current/10",
+          "flex flex-col gap-3 rounded-xl p-3.5 ring-1 ring-inset ring-current/10",
           meal.period === "LUNCH" ? "bg-warm-surface/60" : "bg-cool-surface/60"
         )}
       >
@@ -419,7 +419,7 @@ export function MealCard({
                 aria-pressed={cooked}
                 aria-label={cooked ? "Bỏ đánh dấu đã nấu" : "Đánh dấu đã nấu"}
                 className={cn(
-                  "-mr-1 size-11 shrink-0 hover:bg-card lg:size-6",
+                  "-mr-1 size-11 shrink-0 hover:bg-card lg:size-8",
                   cooked ? "text-primary" : "text-muted-foreground/60"
                 )}
               >
@@ -438,7 +438,7 @@ export function MealCard({
           <p
             className={cn(
               "flex items-center gap-1.5 text-muted-foreground",
-              isFull ? "text-sm" : "text-xs"
+              isFull ? "text-sm" : "text-[13px]"
             )}
           >
             <Users className="size-3.5 shrink-0" />
@@ -473,7 +473,7 @@ export function MealCard({
         </CardAction>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col gap-4">
+      <CardContent className="flex flex-1 flex-col gap-5">
         <div className="flex flex-col gap-3">{dishes}</div>
 
         {members.length > 0 ? (
@@ -483,7 +483,7 @@ export function MealCard({
                 <span
                   className={cn(
                     "mr-0.5 inline-flex items-center gap-1.5 tabular-nums text-muted-foreground",
-                    isFull ? "text-sm" : "text-xs"
+                    isFull ? "text-sm" : "text-[13px]"
                   )}
                 >
                   <Users className="size-3.5" />
@@ -508,8 +508,8 @@ export function MealCard({
                       : `${member.name} có ăn bữa này, bấm nếu vắng`
                   }
                   className={cn(
-                    "h-11 rounded-full px-3 font-medium lg:h-7",
-                    isFull ? "text-sm" : "text-xs",
+                    "h-11 rounded-full px-3 font-medium lg:h-9",
+                    isFull ? "text-sm" : "text-[13px]",
                     absent
                       ? "border border-dashed border-border text-muted-foreground/70 line-through"
                       : "bg-secondary text-secondary-foreground data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"

@@ -8,14 +8,14 @@ function MissingMeal({ period }: { period: "LUNCH" | "DINNER" }) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-2.5 rounded-xl border border-dashed p-3",
+        "flex flex-col gap-3 rounded-xl border border-dashed p-3.5",
         period === "LUNCH"
           ? "border-warm/40 bg-warm-surface/30"
           : "border-cool/40 bg-cool-surface/30"
       )}
     >
       <PeriodChip period={period} />
-      <p className="text-[13px] text-muted-foreground">Chưa lên lịch bữa này</p>
+      <p className="text-sm text-muted-foreground">Chưa lên lịch bữa này</p>
     </div>
   );
 }
@@ -53,7 +53,7 @@ export function DayCard({
         <div className="flex items-center justify-between gap-2">
           <span
             className={cn(
-              "text-[13px] font-semibold",
+              "text-sm font-semibold",
               isToday ? "text-primary" : "text-muted-foreground"
             )}
           >
@@ -71,7 +71,7 @@ export function DayCard({
       </CardHeader>
 
       {/* Split the card body in half: every day's lunch and dinner cells start at the same height. */}
-      <CardContent className="grid flex-1 grid-rows-2 gap-2.5">
+      <CardContent className="grid flex-1 grid-rows-2 gap-3">
         {lunch ? (
           <MealCard meal={lunch} members={members} variant="compact" />
         ) : (

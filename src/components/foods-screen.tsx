@@ -83,7 +83,7 @@ function FoodCard({
   return (
     <Card
       size="sm"
-      className="group relative h-full transition-colors hover:ring-primary/40"
+      className="group relative h-full transition-colors hover:ring-primary/40 hover:ring-2"
     >
       {/* Full-card overlay button: clicking anywhere opens the edit form */}
       <button
@@ -96,12 +96,12 @@ function FoodCard({
         <div className="flex items-start gap-3">
           <FoodTypeTile
             type={food.type}
-            className="size-9"
-            iconClassName="size-4.5"
+            className="size-10"
+            iconClassName="size-5"
           />
           <div className="min-w-0 flex-1">
             <p className="text-base font-semibold leading-snug">{food.name}</p>
-            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+            <p className="mt-1 truncate text-sm text-muted-foreground">
               {food.cookingMethod}
             </p>
           </div>
@@ -110,7 +110,7 @@ function FoodCard({
         <div className="mt-auto flex items-center justify-between gap-2">
           <RatingStars value={food.favoriteScore} />
           <div className="flex items-center gap-2">
-            <span className="text-xs tabular-nums text-muted-foreground">
+            <span className="text-[13px] tabular-nums text-muted-foreground">
               {food.totalCooked > 0
                 ? `Đã nấu ${food.totalCooked} lần`
                 : "Chưa nấu lần nào"}
@@ -122,7 +122,7 @@ function FoodCard({
                   size="icon-sm"
                   aria-label={`Xóa món ${food.name}`}
                   onClick={onDelete}
-                  className="pointer-events-auto -mr-1 size-11 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive lg:size-6"
+                  className="pointer-events-auto -mr-1 size-11 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive lg:size-8"
                 >
                   <Trash2 />
                 </Button>
@@ -279,7 +279,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
         </EmptyState>
       ) : (
         <>
-          <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2.5 rounded-xl border border-border/70 bg-card p-2">
+          <div className="mb-7 flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl border border-border/70 bg-card p-3">
             <InputGroup className="h-11 min-w-44 flex-1 xl:h-10 xl:w-72 xl:flex-none">
               <InputGroupAddon>
                 <Search />
@@ -297,7 +297,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
                     size="icon-xs"
                     aria-label="Xóa từ khóa tìm"
                     onClick={() => setQuery("")}
-                    className="size-11 lg:size-6"
+                    className="size-11 lg:size-8"
                   >
                     <X />
                   </InputGroupButton>
@@ -309,7 +309,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
               <SelectTrigger
                 size="lg"
                 aria-label="Sắp xếp món ăn"
-                className="h-11 w-[10.5rem] shrink-0 text-[13px] font-medium sm:order-3 lg:h-10"
+                className="h-11 w-[10.5rem] shrink-0 text-sm font-medium sm:order-3 lg:h-10"
               >
                 <ArrowDownWideNarrow className="size-4 text-muted-foreground" />
                 <SelectValue />
@@ -336,7 +336,7 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
                   key={val}
                   value={val}
                   size="lg"
-                  className="h-11 gap-1.5 px-4 text-[13px] font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground lg:h-10"
+                  className="h-11 gap-1.5 px-4 text-sm font-medium data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground lg:h-10"
                 >
                   {Icon ? <Icon className="size-3.5" /> : null}
                   {label}

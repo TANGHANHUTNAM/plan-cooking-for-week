@@ -34,7 +34,7 @@ export function WeekSwitcher({
             <ChevronLeft className="size-4.5" />
           </Link>
         </Button>
-        <ButtonGroupText className="min-w-[10.5rem] justify-center bg-card px-4 text-sm font-semibold tabular-nums">
+        <ButtonGroupText className="min-w-[11.5rem] justify-center bg-card px-4 text-sm font-semibold tabular-nums">
           {weekRangeLabel(weekStart)}
         </ButtonGroupText>
         <Button
@@ -61,7 +61,7 @@ export function WeekSwitcher({
           variant="ghost"
           size="lg"
           asChild
-          className="h-11 text-sm lg:h-8"
+          className="h-11 text-sm lg:h-9"
         >
           <Link href={basePath}>Về tuần này</Link>
         </Button>

@@ -65,7 +65,7 @@ function FoodOption({
       >
         <ItemContent>
           <ItemTitle className="text-sm">{name}</ItemTitle>
-          <ItemDescription className="text-[13px]">
+          <ItemDescription className="text-sm">
             {method}, {detail}
           </ItemDescription>
         </ItemContent>
@@ -221,7 +221,7 @@ export function SwapSheet({
         )
       }
     >
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         <Button
           onClick={onRandom}
           disabled={pending}
@@ -234,7 +234,7 @@ export function SwapSheet({
         </Button>
 
         <section>
-          <h3 className="mb-2 text-sm font-semibold">Gợi ý hợp bữa này</h3>
+          <h3 className="mb-3 text-base font-semibold">Gợi ý hợp bữa này</h3>
           <ItemGroup className="gap-2">
             {suggestions === null ? (
               <>
@@ -265,8 +265,10 @@ export function SwapSheet({
         </section>
 
         <section>
-          <h3 className="mb-2 text-sm font-semibold">Hoặc chọn từ danh sách</h3>
-          <InputGroup className="mb-2 h-10">
+          <h3 className="mb-3 text-base font-semibold">
+            Hoặc chọn từ danh sách
+          </h3>
+          <InputGroup className="mb-3 h-11">
             <InputGroupAddon>
               <Search />
             </InputGroupAddon>
@@ -275,7 +277,7 @@ export function SwapSheet({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tìm theo tên hoặc cách chế biến"
               aria-label="Tìm món ăn"
-              className="h-10 text-base md:text-sm"
+              className="h-11 text-base"
             />
             {query ? (
               <InputGroupAddon align="inline-end">
