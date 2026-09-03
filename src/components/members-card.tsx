@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMember } from "@/actions/members";
 import type { Member } from "@/lib/queries";
@@ -10,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -25,6 +25,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
+import { MemberFormSheet } from "@/components/member-form-sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -48,25 +49,17 @@ export function MembersCard({
   members: Member[];
   currentUserId: string;
 }) {
-  const router = useRouter();
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [deleting, startDeleting] = useTransition();
-
-  const isSelf = deleteTarget?.id === currentUserId;
+  const [addOpen, setAddOpen] = useState(false);
 
   const confirmDelete = () => {
     const target = deleteTarget;
     if (!target) return;
     startDeleting(async () => {
       const res = await deleteMember(target.id);
-      if (res.error) {
-        toast.error(res.error);
-      } else if (res.deletedSelf) {
-        router.replace("/login");
-        return;
-      } else {
-        toast.success(`Đã xóa tài khoản “${target.name}”`);
-      }
+      if (res.error) toast.error(res.error);
+      else toast.success(`Đã xóa tài khoản “${target.name}”`);
       setDeleteTarget(null);
     });
   };
@@ -79,6 +72,17 @@ export function MembersCard({
           Cả nhà xem chung một thực đơn. Ai không ăn bữa nào thì đánh dấu ngay
           trên bữa đó.
         </CardDescription>
+        <CardAction>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setAddOpen(true)}
+            className="h-11 text-sm font-semibold lg:h-9"
+          >
+            <UserPlus />
+            Thêm
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <ItemGroup className="gap-1">
@@ -102,7 +106,7 @@ export function MembersCard({
                 </ItemTitle>
                 <ItemDescription>{member.email}</ItemDescription>
               </ItemContent>
-              {members.length > 1 ? (
+              {member.id !== currentUserId ? (
                 <ItemActions>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -137,9 +141,7 @@ export function MembersCard({
               Xóa tài khoản “{deleteTarget?.name}”?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {isSelf
-                ? "Đây là tài khoản bạn đang đăng nhập. Xóa xong bạn sẽ bị đăng xuất ngay và không đăng nhập lại được bằng tài khoản này."
-                : `Tài khoản sẽ không đăng nhập được nữa và các đánh dấu ăn hay vắng của ${deleteTarget?.name ?? ""} bị xóa theo. Thực đơn và món ăn chung không đổi.`}
+              {`Tài khoản sẽ không đăng nhập được nữa và các đánh dấu ăn hay vắng của ${deleteTarget?.name ?? ""} bị xóa theo. Thực đơn và món ăn chung không đổi.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -153,11 +155,13 @@ export function MembersCard({
               variant="destructive"
             >
               {deleting ? <Spinner /> : null}
-              {isSelf ? "Xóa và đăng xuất" : "Xóa tài khoản"}
+              Xóa tài khoản
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <MemberFormSheet open={addOpen} onOpenChange={setAddOpen} />
     </Card>
   );
 }

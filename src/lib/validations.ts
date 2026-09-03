@@ -17,6 +17,18 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Nhập mật khẩu"),
 });
 
+/** Creating an account for another household member (Settings). */
+export const memberSchema = z.object({
+  name: z.string().trim().min(1, "Nhập tên thành viên").max(50, "Tên quá dài"),
+  email: z.email("Email không hợp lệ"),
+  password: z
+    .string()
+    .min(6, "Mật khẩu cần ít nhất 6 ký tự")
+    .max(72, "Mật khẩu quá dài"), // bcrypt only reads the first 72 bytes
+});
+
+export type MemberInput = z.infer<typeof memberSchema>;
+
 export const foodSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên món").max(100, "Tên món quá dài"),
   type: z.enum(["MAIN", "SIDE"]),

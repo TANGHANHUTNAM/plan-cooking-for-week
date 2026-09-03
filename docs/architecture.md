@@ -46,7 +46,7 @@ Excel import is intentionally two-stage: `parseImportExcel` validates and previe
 
 ## Authentication and household access
 
-Authentication is a compact custom flow in `src/actions/auth.ts` and `src/lib/session.ts`: bcrypt verifies passwords, a JWT is signed with HS256, and the `pf_session` httpOnly cookie lasts 90 days with sliding renewal after 30 days. `getSession()` is required for protected app pages and authenticated domain mutations; the login/logout entry and exit actions intentionally do not require an existing session. There is no role-based access control; authenticated family members share the same plan and food data. Member deletion blocks deletion of the last account and signs out the current user when they delete themselves.
+Authentication is a compact custom flow in `src/actions/auth.ts` and `src/lib/session.ts`: bcrypt verifies passwords, a JWT is signed with HS256, and the `pf_session` httpOnly cookie lasts 90 days with sliding renewal after 30 days. `getSession()` is required for protected app pages and authenticated domain mutations; the login/logout entry and exit actions intentionally do not require an existing session. There is no role-based access control; authenticated family members share the same plan and food data, and any signed-in member can create an account for someone else — `createMember` in `src/actions/members.ts` validates with `memberSchema`, lowercases the unique email, and hashes with the same bcrypt cost as the seed, so a new account logs in immediately. `deleteMember` refuses the caller’s own account: removing an account is always somebody else’s action, so nobody can lock themselves out or lose their session mid-use. It still blocks deleting the last account. The UI mirrors this by omitting the delete control on your own row.
 
 ## Meal planning behavior
 
@@ -66,7 +66,7 @@ These are current implementation decisions, not future work:
 - `User.passwordHash` exists for login. `FoodStatistic.weekly_count` is not stored; the current implementation keeps total/last-cooked statistics and derives other views from meals.
 - The meal plan is household-shared rather than user-owned, with multiple family accounts and per-meal absence marking.
 - “Đã nấu” is meal-level (`Meal.cookedAt`) and updates all dishes in that meal. `favoriteScore` is the 0–5 favorite/rating field.
-- Side dishes are optional per meal, meal notes are supported, and Excel import, theme selection, and member management are implemented additions.
+- Side dishes are optional per meal, meal notes are supported, and Excel import, theme selection, and member management (create an account for another member, delete anyone except yourself) are implemented additions.
 - Whole-week randomize/copy is undoable: `plan_snapshots` holds recent versions of a week, the success toast offers `Hoàn tác`, and `Lịch sử` on the week page lists saved versions day by day for restoring. The spec did not ask for plan history; it exists because a mis-tapped `Random tuần` used to discard hand-edited days permanently.
 
 When a behavior changes, update the relevant source first, then this document if the decision is durable. Do not copy implementation plans, credentials, or historical status into the design standard.
