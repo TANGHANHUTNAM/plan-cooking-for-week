@@ -480,7 +480,7 @@ export function ShoppingScreen({
               </SectionHeading>
 
               {meal.note ? (
-                <p className="mb-3 flex items-start gap-2 rounded-md bg-warm-surface px-3 py-2 text-[13px] text-warm-foreground">
+                <p className="mb-3 flex items-start gap-2 rounded-md bg-warm-surface px-3 py-2 text-sm text-warm-foreground">
                   <StickyNote className="mt-px size-3.5 shrink-0 text-warm" />
                   <span className="min-w-0 whitespace-pre-wrap">
                     {meal.note}
@@ -500,7 +500,7 @@ export function ShoppingScreen({
                         : "border-l-cool/70"
                     )}
                   >
-                    <p className="flex items-center gap-2 border-b bg-muted/50 px-3.5 py-2 text-[13px] font-semibold">
+                    <p className="flex items-center gap-2 border-b bg-muted/50 px-3.5 py-2 text-sm font-semibold">
                       <FoodTypeTile
                         type={dish.position}
                         className="size-6"
@@ -555,7 +555,7 @@ export function ShoppingScreen({
             <Plus className="size-4 text-primary" />
             Mua thêm
           </CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Thêm gia vị, hoa quả hoặc đồ dùng không nằm trong thực đơn. Danh
             sách này được dùng chung trong nhà.
           </p>

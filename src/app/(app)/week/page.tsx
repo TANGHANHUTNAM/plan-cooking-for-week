@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { getSession } from "@/lib/session";
-import { getAllFoods, getMembers, getWeekPlan } from "@/lib/queries";
-import { mapFood, mapMeal, mapMember } from "@/lib/dto";
+import { getMembers, getWeekPlan } from "@/lib/queries";
+import { mapMeal, mapMember } from "@/lib/dto";
 import type { MealDTO } from "@/lib/dto";
 import {
   DAY_LABELS,
@@ -32,12 +32,10 @@ export default async function WeekPage({
   const weekStart = normalizeWeekParam(w);
   const today = todayISO();
 
-  const [plan, foods, members] = await Promise.all([
+  const [plan, members] = await Promise.all([
     getWeekPlan(weekStart),
-    getAllFoods(),
     getMembers(),
   ]);
-  const foodDTOs = foods.map(mapFood);
   const memberDTOs = members.map(mapMember);
   const hasPlan = (plan?.meals.length ?? 0) > 0;
 
@@ -102,7 +100,6 @@ export default async function WeekPage({
                 isToday={dayISO === today}
                 lunch={dayMeals?.LUNCH}
                 dinner={dayMeals?.DINNER}
-                foods={foodDTOs}
                 members={memberDTOs}
               />
             );

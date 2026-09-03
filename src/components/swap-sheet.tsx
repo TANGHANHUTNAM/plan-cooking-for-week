@@ -5,6 +5,7 @@ import { CircleSlash, Dices, Search, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   addMealItem,
+  loadSwapFoods,
   removeSideDish,
   setItemFood,
   suggestForItem,
@@ -12,7 +13,7 @@ import {
   swapItemRandom,
   type SuggestionDTO,
 } from "@/actions/plans";
-import type { FoodDTO, MealItemDTO } from "@/lib/dto";
+import type { SwapFoodDTO, SwapItemDTO } from "@/lib/dto";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -64,7 +65,7 @@ function FoodOption({
       >
         <ItemContent>
           <ItemTitle className="text-sm">{name}</ItemTitle>
-          <ItemDescription>
+          <ItemDescription className="text-[13px]">
             {method}, {detail}
           </ItemDescription>
         </ItemContent>
@@ -85,39 +86,74 @@ export function SwapSheet({
   mealId,
   position,
   item,
-  foods,
   open,
   onOpenChange,
 }: {
   mealId: string;
   position: "MAIN" | "SIDE";
-  item: MealItemDTO | null;
-  foods: FoodDTO[];
+  item: SwapItemDTO | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [suggestions, setSuggestions] = useState<SuggestionDTO[] | null>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
+  const [foods, setFoods] = useState<SwapFoodDTO[] | null>(null);
+  const [foodsError, setFoodsError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
 
   const positionLabel = position === "MAIN" ? "món chính" : "món phụ";
   const isAddMode = item === null;
 
-  // the component mounts anew each time the sheet opens, so fetch only once
+  // The sheet mounts only after a swap control is invoked, so load its data on demand.
   useEffect(() => {
+    if (!open) return;
+
     let cancelled = false;
-    const load = item
-      ? suggestForItem(item.id)
-      : suggestForMeal(mealId, position);
-    load.then((res) => {
-      if (!cancelled) setSuggestions(res.suggestions ?? []);
-    });
+    const load = async () => {
+      try {
+        const [suggestionResult, foodsResult] = await Promise.all([
+          item ? suggestForItem(item.id) : suggestForMeal(mealId, position),
+          loadSwapFoods(),
+        ]);
+        if (cancelled) return;
+
+        if (suggestionResult.error) {
+          setSuggestionError(suggestionResult.error);
+          setSuggestions([]);
+          toast.error(suggestionResult.error);
+        } else {
+          setSuggestionError(null);
+          setSuggestions(suggestionResult.suggestions ?? []);
+        }
+
+        if (foodsResult.error) {
+          setFoodsError(foodsResult.error);
+          setFoods([]);
+          toast.error(foodsResult.error);
+        } else {
+          setFoodsError(null);
+          setFoods(foodsResult.foods ?? []);
+        }
+      } catch {
+        if (cancelled) return;
+        const error =
+          "Không tải được dữ liệu đổi món — kiểm tra mạng rồi thử lại nhé";
+        setSuggestionError(error);
+        setSuggestions([]);
+        setFoodsError(error);
+        setFoods([]);
+        toast.error(error);
+      }
+    };
+
+    void load();
     return () => {
       cancelled = true;
     };
-  }, [item, mealId, position]);
+  }, [item, mealId, open, position]);
 
-  const pool = foods.filter(
+  const pool = (foods ?? []).filter(
     (f) => f.type === position && f.id !== item?.food.id
   );
   const q = query.trim().toLowerCase();
@@ -206,6 +242,8 @@ export function SwapSheet({
                 <Skeleton className="h-[54px] rounded-md" />
                 <Skeleton className="h-[54px] rounded-md" />
               </>
+            ) : suggestionError ? (
+              <p className="text-sm text-destructive">{suggestionError}</p>
             ) : suggestions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Chưa gợi ý được món nào. Thêm món mới ở tab Món ăn trước nhé.
@@ -252,7 +290,15 @@ export function SwapSheet({
             ) : null}
           </InputGroup>
 
-          {filtered.length === 0 ? (
+          {foods === null ? (
+            <ItemGroup className="gap-2">
+              <Skeleton className="h-[54px] rounded-md" />
+              <Skeleton className="h-[54px] rounded-md" />
+              <Skeleton className="h-[54px] rounded-md" />
+            </ItemGroup>
+          ) : foodsError ? (
+            <p className="py-3 text-sm text-destructive">{foodsError}</p>
+          ) : filtered.length === 0 ? (
             <p className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
               <SearchX className="size-4 shrink-0" />
               Không có món nào khớp từ khóa này.

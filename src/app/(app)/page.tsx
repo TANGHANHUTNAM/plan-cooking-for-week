@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarDays, CookingPot } from "lucide-react";
 import { getSession } from "@/lib/session";
-import { getAllFoods, getMembers, getWeekPlan } from "@/lib/queries";
-import { mapFood, mapMeal, mapMember } from "@/lib/dto";
+import { getMembers, getWeekPlan } from "@/lib/queries";
+import { mapMeal, mapMember } from "@/lib/dto";
 import { formatDayFull, todayISO, weekStartISO } from "@/lib/week";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,12 +46,10 @@ export default async function TodayPage() {
 
   const today = todayISO();
   const weekStart = weekStartISO(today);
-  const [plan, foods, members] = await Promise.all([
+  const [plan, members] = await Promise.all([
     getWeekPlan(weekStart),
-    getAllFoods(),
     getMembers(),
   ]);
-  const foodDTOs = foods.map(mapFood);
   const memberDTOs = members.map(mapMember);
 
   const weekMeals = plan?.meals ?? [];
@@ -121,22 +119,12 @@ export default async function TodayPage() {
 
           <div className="grid auto-rows-fr items-stretch gap-5 md:grid-cols-2">
             {lunch ? (
-              <MealCard
-                meal={lunch}
-                foods={foodDTOs}
-                members={memberDTOs}
-                variant="full"
-              />
+              <MealCard meal={lunch} members={memberDTOs} variant="full" />
             ) : (
               <MissingMealCard period="LUNCH" weekStart={weekStart} />
             )}
             {dinner ? (
-              <MealCard
-                meal={dinner}
-                foods={foodDTOs}
-                members={memberDTOs}
-                variant="full"
-              />
+              <MealCard meal={dinner} members={memberDTOs} variant="full" />
             ) : (
               <MissingMealCard period="DINNER" weekStart={weekStart} />
             )}

@@ -45,7 +45,7 @@ export function BottomNav() {
               </span>
               <span
                 className={cn(
-                  "truncate text-[11px] leading-none",
+                  "truncate text-xs leading-none",
                   active
                     ? "font-semibold text-foreground"
                     : "font-medium text-muted-foreground"

@@ -1,4 +1,4 @@
-import type { FoodDTO, MealDTO, MemberDTO } from "@/lib/dto";
+import type { MealDTO, MemberDTO } from "@/lib/dto";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MealCard, PeriodChip } from "@/components/meal-card";
@@ -15,7 +15,7 @@ function MissingMeal({ period }: { period: "LUNCH" | "DINNER" }) {
       )}
     >
       <PeriodChip period={period} />
-      <p className="text-xs text-muted-foreground">Chưa lên lịch bữa này</p>
+      <p className="text-[13px] text-muted-foreground">Chưa lên lịch bữa này</p>
     </div>
   );
 }
@@ -31,7 +31,6 @@ export function DayCard({
   isToday,
   lunch,
   dinner,
-  foods,
   members,
 }: {
   weekdayLabel: string;
@@ -39,7 +38,6 @@ export function DayCard({
   isToday: boolean;
   lunch?: MealDTO;
   dinner?: MealDTO;
-  foods: FoodDTO[];
   members: MemberDTO[];
 }) {
   return (
@@ -75,22 +73,12 @@ export function DayCard({
       {/* Split the card body in half: every day's lunch and dinner cells start at the same height. */}
       <CardContent className="grid flex-1 grid-rows-2 gap-2.5">
         {lunch ? (
-          <MealCard
-            meal={lunch}
-            foods={foods}
-            members={members}
-            variant="compact"
-          />
+          <MealCard meal={lunch} members={members} variant="compact" />
         ) : (
           <MissingMeal period="LUNCH" />
         )}
         {dinner ? (
-          <MealCard
-            meal={dinner}
-            foods={foods}
-            members={members}
-            variant="compact"
-          />
+          <MealCard meal={dinner} members={members} variant="compact" />
         ) : (
           <MissingMeal period="DINNER" />
         )}

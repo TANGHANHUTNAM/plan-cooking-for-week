@@ -1,17 +1,33 @@
 import { prisma } from "@/lib/prisma";
 import { dateToISO, isoToDate } from "@/lib/week";
 
-/** One household's weekly plan (unique by week), including foods, ingredients, and absences. */
+/** One household's weekly plan, selecting only fields used by calendar and shopping views. */
 export async function getWeekPlan(weekStartISO: string) {
   return prisma.mealPlan.findUnique({
     where: { weekStart: isoToDate(weekStartISO) },
-    include: {
+    select: {
       meals: {
         orderBy: [{ date: "asc" }, { period: "asc" }],
-        include: {
+        select: {
+          id: true,
+          date: true,
+          period: true,
+          cookedAt: true,
+          note: true,
           items: {
             orderBy: { position: "asc" }, // MAIN before SIDE
-            include: { food: { include: { ingredients: true } } },
+            select: {
+              id: true,
+              position: true,
+              food: {
+                select: {
+                  id: true,
+                  name: true,
+                  cookingMethod: true,
+                  ingredients: { select: { name: true } },
+                },
+              },
+            },
           },
           absences: { select: { userId: true } },
         },
@@ -58,11 +74,20 @@ export async function getShoppingState(
 
 export type ShoppingState = Awaited<ReturnType<typeof getShoppingState>>;
 
-/** All foods and their statistics, sorted by name. */
+/** All food fields needed by the Foods page and edit form, sorted by name. */
 export async function getAllFoods() {
   return prisma.food.findMany({
     orderBy: [{ name: "asc" }],
-    include: { ingredients: true, statistic: true },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      cookingMethod: true,
+      note: true,
+      favoriteScore: true,
+      ingredients: { select: { name: true } },
+      statistic: { select: { totalCooked: true } },
+    },
   });
 }
 

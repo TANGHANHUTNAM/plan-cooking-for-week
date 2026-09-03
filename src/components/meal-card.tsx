@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useOptimistic, useState, useTransition } from "react";
 import {
   ArrowLeftRight,
@@ -20,7 +21,7 @@ import {
   toggleMealAbsence,
   undoCooked,
 } from "@/actions/plans";
-import type { FoodDTO, MealDTO, MealItemDTO, MemberDTO } from "@/lib/dto";
+import type { MealDTO, MealItemDTO, MemberDTO, SwapItemDTO } from "@/lib/dto";
 import { APP_TZ } from "@/lib/week";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +43,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { FoodTypeIcon } from "@/components/food-type";
-import { SwapSheet } from "@/components/swap-sheet";
+
+const LazySwapSheet = dynamic(
+  () => import("@/components/swap-sheet").then((module) => module.SwapSheet),
+  { loading: () => null }
+);
 
 /** Lunch uses teal/cyan, dinner uses slate/blue — the color makes the meal obvious at a glance. */
 const PERIOD_META = {
@@ -130,7 +135,12 @@ function DishRow({
         >
           {name}
         </p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+        <p
+          className={cn(
+            "mt-0.5 truncate text-muted-foreground",
+            size === "full" ? "text-sm" : "text-xs"
+          )}
+        >
           {method}
         </p>
       </div>
@@ -169,7 +179,7 @@ function EmptyDishRow({
     "flex w-full items-center gap-2.5 rounded-md border border-dashed border-border text-left text-muted-foreground",
     size === "full" ? "px-3 py-2.5" : "px-2.5 py-2"
   );
-  const text = cn("font-medium", size === "full" ? "text-sm" : "text-xs");
+  const text = cn("font-medium", size === "full" ? "text-sm" : "text-[13px]");
 
   return (
     <button
@@ -190,18 +200,16 @@ function EmptyDishRow({
 
 export function MealCard({
   meal,
-  foods,
   members,
   variant,
 }: {
   meal: MealDTO;
-  foods: FoodDTO[];
   members: MemberDTO[];
   variant: "full" | "compact";
 }) {
   const [sheet, setSheet] = useState<{
     position: "MAIN" | "SIDE";
-    item: MealItemDTO | null;
+    item: SwapItemDTO | null;
   } | null>(null);
   const [noteDraft, setNoteDraft] = useState<string | null>(null); // null = no edit
   const [pending, startTransition] = useTransition();
@@ -262,7 +270,12 @@ export function MealCard({
     });
 
   const openSwap = (position: "MAIN" | "SIDE", item: MealItemDTO | null) =>
-    setSheet({ position, item });
+    setSheet({
+      position,
+      item: item
+        ? { id: item.id, food: { id: item.food.id, name: item.food.name } }
+        : null,
+    });
 
   const periodChip = (
     <PeriodChip period={meal.period} size={isFull ? "full" : "compact"} />
@@ -357,7 +370,7 @@ export function MealCard({
         <span
           className={cn(
             "min-w-0 flex-1 whitespace-pre-wrap text-warm-foreground",
-            isFull ? "text-[13px]" : "text-xs"
+            isFull ? "text-sm" : "text-xs"
           )}
         >
           {meal.note}
@@ -375,11 +388,10 @@ export function MealCard({
     ) : null;
 
   const swapSheet = sheet ? (
-    <SwapSheet
+    <LazySwapSheet
       mealId={meal.id}
       position={sheet.position}
       item={sheet.item}
-      foods={foods}
       open={sheet !== null}
       onOpenChange={(open) => {
         if (!open) setSheet(null);
@@ -423,7 +435,12 @@ export function MealCard({
         <div className="flex flex-col gap-2.5">{dishes}</div>
 
         {absentMembers.length > 0 ? (
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p
+            className={cn(
+              "flex items-center gap-1.5 text-muted-foreground",
+              isFull ? "text-sm" : "text-xs"
+            )}
+          >
             <Users className="size-3.5 shrink-0" />
             <span className="truncate">
               Vắng {absentMembers.map((m) => m.name).join(", ")}
@@ -463,7 +480,12 @@ export function MealCard({
           <div className="flex flex-wrap items-center gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="mr-0.5 inline-flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
+                <span
+                  className={cn(
+                    "mr-0.5 inline-flex items-center gap-1.5 tabular-nums text-muted-foreground",
+                    isFull ? "text-sm" : "text-xs"
+                  )}
+                >
                   <Users className="size-3.5" />
                   {eatingCount}/{members.length}
                 </span>
@@ -486,7 +508,8 @@ export function MealCard({
                       : `${member.name} có ăn bữa này, bấm nếu vắng`
                   }
                   className={cn(
-                    "h-11 rounded-full px-3 text-xs font-medium lg:h-7",
+                    "h-11 rounded-full px-3 font-medium lg:h-7",
+                    isFull ? "text-sm" : "text-xs",
                     absent
                       ? "border border-dashed border-border text-muted-foreground/70 line-through"
                       : "bg-secondary text-secondary-foreground data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"

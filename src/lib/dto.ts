@@ -24,10 +24,31 @@ export interface FoodDTO {
   totalCooked: number;
 }
 
+export interface SwapFoodDTO {
+  id: string;
+  name: string;
+  type: "MAIN" | "SIDE";
+  cookingMethod: string;
+  favoriteScore: number;
+  totalCooked: number;
+}
+
+export interface MealFoodDTO {
+  id: string;
+  name: string;
+  cookingMethod: string;
+  ingredients: string[];
+}
+
 export interface MealItemDTO {
   id: string;
   position: "MAIN" | "SIDE";
-  food: FoodDTO;
+  food: MealFoodDTO;
+}
+
+export interface SwapItemDTO {
+  id: string;
+  food: Pick<MealFoodDTO, "id" | "name">;
 }
 
 export interface MealDTO {
@@ -69,12 +90,8 @@ export function mapMeal(meal: WeekMeal): MealDTO {
       food: {
         id: item.food.id,
         name: item.food.name,
-        type: item.food.type,
         cookingMethod: item.food.cookingMethod,
-        note: item.food.note,
-        favoriteScore: item.food.favoriteScore,
         ingredients: item.food.ingredients.map((i) => i.name),
-        totalCooked: 0, // unused in the calendar
       },
     })),
   };

@@ -232,7 +232,7 @@ function FoodForm({
               size="lg"
               disabled={deleting || pending}
               onClick={() => setConfirmDelete(true)}
-              className="mx-auto h-11 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive lg:h-8"
+              className="mx-auto h-11 text-sm text-destructive hover:bg-destructive/10 hover:text-destructive lg:h-8"
             >
               {deleting ? <Spinner /> : <Trash2 />}
               Xóa món này

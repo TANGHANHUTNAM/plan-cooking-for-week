@@ -100,8 +100,8 @@ function FoodCard({
             iconClassName="size-4.5"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold leading-snug">{food.name}</p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            <p className="text-base font-semibold leading-snug">{food.name}</p>
+            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
               {food.cookingMethod}
             </p>
           </div>

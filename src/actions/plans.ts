@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import type { SwapFoodDTO } from "@/lib/dto";
 import { getSession, type SessionPayload } from "@/lib/session";
 import {
   generateWeekAssignments,
@@ -27,7 +28,15 @@ async function requireSession(): Promise<SessionPayload> {
 }
 
 async function loadCandidates(): Promise<CandidateFood[]> {
-  const foods = await prisma.food.findMany({ include: { statistic: true } });
+  const foods = await prisma.food.findMany({
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      favoriteScore: true,
+      statistic: { select: { totalCooked: true, lastCookedAt: true } },
+    },
+  });
   return foods.map((f) => ({
     id: f.id,
     name: f.name,
@@ -36,6 +45,41 @@ async function loadCandidates(): Promise<CandidateFood[]> {
     totalCooked: f.statistic?.totalCooked ?? 0,
     lastCookedAt: f.statistic?.lastCookedAt ?? null,
   }));
+}
+
+/** The manual swap picker gets only the fields it renders, and only on demand. */
+export async function loadSwapFoods(): Promise<{
+  error?: string;
+  foods?: SwapFoodDTO[];
+}> {
+  await requireSession();
+  try {
+    const foods = await prisma.food.findMany({
+      orderBy: [{ name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        cookingMethod: true,
+        favoriteScore: true,
+        statistic: { select: { totalCooked: true } },
+      },
+    });
+    return {
+      foods: foods.map((food) => ({
+        id: food.id,
+        name: food.name,
+        type: food.type,
+        cookingMethod: food.cookingMethod,
+        favoriteScore: food.favoriteScore,
+        totalCooked: food.statistic?.totalCooked ?? 0,
+      })),
+    };
+  } catch {
+    return {
+      error: "Không tải được danh sách món — kiểm tra mạng rồi thử lại nhé",
+    };
+  }
 }
 
 /** Randomize the entire week (overwrites the existing plan for that week). */
@@ -279,7 +323,13 @@ async function topSuggestionDTOs(
 
   const foods = await prisma.food.findMany({
     where: { id: { in: order } },
-    include: { statistic: true },
+    select: {
+      id: true,
+      name: true,
+      cookingMethod: true,
+      favoriteScore: true,
+      statistic: { select: { totalCooked: true } },
+    },
   });
   foods.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   return foods.map((f) => ({

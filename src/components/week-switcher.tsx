@@ -61,7 +61,7 @@ export function WeekSwitcher({
           variant="ghost"
           size="lg"
           asChild
-          className="h-11 text-xs lg:h-8"
+          className="h-11 text-sm lg:h-8"
         >
           <Link href={basePath}>Về tuần này</Link>
         </Button>
