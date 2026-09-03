@@ -48,14 +48,6 @@ export function SideNav() {
                   : "font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )}
             >
-              {/* Pair the row state with an icon block for a quick destination scan. */}
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary transition-opacity",
-                  active ? "opacity-100" : "opacity-0"
-                )}
-              />
               <span
                 aria-hidden
                 className={cn(
