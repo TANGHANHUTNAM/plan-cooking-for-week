@@ -52,6 +52,16 @@ export { Prisma };
  */
 export type User = Prisma.UserModel;
 /**
+ * Model ShoppingIngredientCheck
+ * Có dòng = nguyên liệu đã mua trong tuần, dùng chung cho cả nhà.
+ */
+export type ShoppingIngredientCheck = Prisma.ShoppingIngredientCheckModel;
+/**
+ * Model ShoppingExtra
+ * Đồ mua thêm theo ngày, dùng chung cho cả nhà.
+ */
+export type ShoppingExtra = Prisma.ShoppingExtraModel;
+/**
  * Model Food
  *
  */

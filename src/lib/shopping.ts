@@ -22,6 +22,18 @@ export interface ShoppingEntry {
   count: number;
 }
 
+export interface ShoppingExtra {
+  id: string;
+  dateISO: string;
+  name: string;
+  purchased: boolean;
+}
+
+/** Khóa bền vững cho nguyên liệu: giữ dấu, bỏ khoảng trắng đầu/cuối và không phân biệt hoa thường. */
+export function normalizeIngredientKey(name: string): string {
+  return name.normalize("NFC").trim().toLocaleLowerCase("vi-VN");
+}
+
 /** Gộp nguyên liệu của các bữa đã cho, trùng tên (không phân biệt hoa thường) thì cộng dồn. */
 export function aggregateIngredients(meals: ShoppingMeal[]): ShoppingEntry[] {
   const map = new Map<string, ShoppingEntry>();
@@ -29,7 +41,7 @@ export function aggregateIngredients(meals: ShoppingMeal[]): ShoppingEntry[] {
     for (const dish of meal.dishes) {
       for (const raw of dish.ingredients) {
         const name = raw.trim();
-        const key = name.toLowerCase();
+        const key = normalizeIngredientKey(raw);
         if (!key) continue;
         const entry = map.get(key);
         if (entry) {

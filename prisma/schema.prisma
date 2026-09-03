@@ -28,6 +28,31 @@ model User {
   @@map("users")
 }
 
+/// Có dòng = nguyên liệu đã mua trong tuần, dùng chung cho cả nhà.
+model ShoppingIngredientCheck {
+  id             String   @id @default(cuid())
+  weekStart      DateTime @db.Date
+  ingredientKey  String
+  createdAt      DateTime @default(now())
+
+  @@unique([weekStart, ingredientKey])
+  @@index([weekStart])
+  @@map("shopping_ingredient_checks")
+}
+
+/// Đồ mua thêm theo ngày, dùng chung cho cả nhà.
+model ShoppingExtra {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  name      String
+  purchased Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@map("shopping_extras")
+}
+
 model Food {
   id            String         @id @default(cuid())
   name          String

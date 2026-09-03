@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isoToDate } from "@/lib/week";
+import { dateToISO, isoToDate } from "@/lib/week";
 
 /** Thực đơn 1 tuần của CẢ NHÀ (unique theo tuần) kèm món + nguyên liệu + ai không ăn. */
 export async function getWeekPlan(weekStartISO: string) {
@@ -22,6 +22,41 @@ export async function getWeekPlan(weekStartISO: string) {
 
 export type WeekPlan = NonNullable<Awaited<ReturnType<typeof getWeekPlan>>>;
 export type WeekMeal = WeekPlan["meals"][number];
+
+/** Trạng thái đi chợ dùng chung: tick theo tuần và đồ mua thêm theo ngày. */
+export async function getShoppingState(
+  weekStartISO: string,
+  extraEndISO: string
+) {
+  const [ingredientChecks, extras] = await Promise.all([
+    prisma.shoppingIngredientCheck.findMany({
+      where: { weekStart: isoToDate(weekStartISO) },
+      select: { ingredientKey: true },
+    }),
+    prisma.shoppingExtra.findMany({
+      where: {
+        date: {
+          gte: isoToDate(weekStartISO),
+          lte: isoToDate(extraEndISO),
+        },
+      },
+      orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+      select: { id: true, date: true, name: true, purchased: true },
+    }),
+  ]);
+
+  return {
+    ingredientKeys: ingredientChecks.map((check) => check.ingredientKey),
+    extras: extras.map((extra) => ({
+      id: extra.id,
+      dateISO: dateToISO(extra.date),
+      name: extra.name,
+      purchased: extra.purchased,
+    })),
+  };
+}
+
+export type ShoppingState = Awaited<ReturnType<typeof getShoppingState>>;
 
 /** Toàn bộ món + thống kê, sắp theo tên. */
 export async function getAllFoods() {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { getWeekPlan, type WeekPlan } from "@/lib/queries";
+import { getShoppingState, getWeekPlan, type WeekPlan } from "@/lib/queries";
 import type { ShoppingMeal } from "@/lib/shopping";
 import {
   addDaysISO,
@@ -48,13 +48,17 @@ export default async function ShoppingPage({
   const tomorrow = addDaysISO(today, 1);
   const isCurrentWeek = weekStart === weekStartISO(today);
   const tomorrowWeek = weekStartISO(tomorrow);
+  const weekEnd = addDaysISO(weekStart, 6);
 
   // "Tối nay + trưa mai": Chủ nhật thì trưa mai nằm ở tuần sau -> tải thêm tuần đó
-  const [plan, nextWeekPlan] = await Promise.all([
+  const extraEnd =
+    isCurrentWeek && tomorrowWeek !== weekStart ? tomorrow : weekEnd;
+  const [plan, nextWeekPlan, shoppingState] = await Promise.all([
     getWeekPlan(weekStart),
     isCurrentWeek && tomorrowWeek !== weekStart
       ? getWeekPlan(tomorrowWeek)
       : Promise.resolve(null),
+    getShoppingState(weekStart, extraEnd),
   ]);
 
   const meals = [...toShoppingMeals(plan), ...toShoppingMeals(nextWeekPlan)];
@@ -65,13 +69,17 @@ export default async function ShoppingPage({
         title="Đi chợ"
         description="Nguyên liệu gom sẵn theo bữa. Tick từng món khi đã mua."
         actions={<WeekSwitcher weekStart={weekStart} basePath="/shopping" />}
+        className="flex-col sm:flex-row"
       />
       <ShoppingScreen
+        key={weekStart}
         meals={meals}
         weekStart={weekStart}
         today={today}
         tomorrow={tomorrow}
         isCurrentWeek={isCurrentWeek}
+        checkedIngredientKeys={shoppingState.ingredientKeys}
+        extras={shoppingState.extras}
       />
     </div>
   );

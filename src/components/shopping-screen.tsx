@@ -1,16 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import Link from "next/link";
 import {
   CalendarDays,
   Copy,
   Info,
+  Plus,
   ShoppingBasket,
   StickyNote,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { aggregateIngredients, type ShoppingMeal } from "@/lib/shopping";
+import {
+  addShoppingExtra,
+  deleteShoppingExtra,
+  setShoppingExtraPurchased,
+  setShoppingIngredientChecked,
+} from "@/actions/shopping";
+import {
+  aggregateIngredients,
+  normalizeIngredientKey,
+  type ShoppingExtra,
+  type ShoppingMeal,
+} from "@/lib/shopping";
 import {
   addDaysISO,
   DAY_LABELS,
@@ -22,10 +41,19 @@ import {
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EmptyState } from "@/components/empty-state";
 import { FoodTypeTile } from "@/components/food-type";
@@ -44,12 +72,16 @@ export function ShoppingScreen({
   today,
   tomorrow,
   isCurrentWeek,
+  checkedIngredientKeys,
+  extras: initialExtras,
 }: {
   meals: ShoppingMeal[];
   weekStart: string;
   today: string;
   tomorrow: string;
   isCurrentWeek: boolean;
+  checkedIngredientKeys: string[];
+  extras: ShoppingExtra[];
 }) {
   const days = weekDaysISO(weekStart);
   const weekEnd = addDaysISO(weekStart, 6);
@@ -57,9 +89,13 @@ export function ShoppingScreen({
   const [scope, setScope] = useState<string>(() =>
     isCurrentWeek ? EVENING_SCOPE : WEEK_SCOPE
   );
-
-  const storageKey = `pf-shop-${weekStart}`;
-  const [checked, setChecked] = useState<string[]>([]);
+  const [checked, setChecked] = useState<Set<string>>(
+    () => new Set(checkedIngredientKeys)
+  );
+  const [extraItems, setExtraItems] = useState<ShoppingExtra[]>(initialExtras);
+  const [extraDraft, setExtraDraft] = useState("");
+  const [extraDate, setExtraDate] = useState(isCurrentWeek ? today : days[0]);
+  const [pending, startTransition] = useTransition();
   const activeChipRef = useRef<HTMLButtonElement | null>(null);
 
   // đưa chip đang chọn vào tầm nhìn trên mobile
@@ -70,52 +106,38 @@ export function ShoppingScreen({
     });
   }, [scope]);
 
-  useEffect(() => {
-    // localStorage chỉ đọc được sau khi hydrate — bắt buộc sync qua effect
-    let next: string[] = [];
-    try {
-      const raw = localStorage.getItem(storageKey);
-      next = raw ? (JSON.parse(raw) as string[]) : [];
-    } catch {
-      next = [];
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setChecked(next);
-  }, [storageKey]);
-
-  const isChecked = (name: string) => checked.includes(name.trim());
-
-  const toggle = (name: string) => {
-    const key = name.trim();
-    setChecked((prev) => {
-      const next = prev.includes(key)
-        ? prev.filter((n) => n !== key)
-        : [...prev, key];
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(next));
-      } catch {
-        // localStorage bị chặn: chỉ mất trạng thái tick, không chặn thao tác
-      }
-      return next;
-    });
+  // đổi phạm vi cũng đổi ngày mặc định cho mục "Mua thêm"
+  const onScopeChange = (nextScope: string) => {
+    if (!nextScope) return;
+    setScope(nextScope);
+    const nextDates = datesForScope(nextScope);
+    if (!nextDates.includes(extraDate)) setExtraDate(nextDates[0]);
   };
 
-  if (meals.length === 0) {
-    return (
-      <EmptyState
-        icon={<ShoppingBasket />}
-        title="Chưa có gì để mua"
-        description="Tuần này chưa có thực đơn nên chưa gom được nguyên liệu nào."
-      >
-        <Button variant="outline" size="lg" asChild className="h-11 lg:h-10">
-          <Link href="/week">
-            <CalendarDays />
-            Mở lịch tuần
-          </Link>
-        </Button>
-      </EmptyState>
-    );
-  }
+  const datesForScope = (value: string): string[] =>
+    value === EVENING_SCOPE
+      ? [today, tomorrow]
+      : value === WEEK_SCOPE
+        ? days
+        : [value];
+
+  const visibleDates = datesForScope(scope);
+
+  const dateLabel = (dateISO: string) => {
+    if (dateISO === today) return "Hôm nay";
+    if (dateISO === tomorrow) return "Ngày mai";
+    const dayIndex = days.indexOf(dateISO);
+    return dayIndex >= 0
+      ? DAY_LABELS_SHORT[dayIndex]
+      : DAY_LABELS[weekdayIndex(dateISO)];
+  };
+
+  const extraDateLabel = (dateISO: string) =>
+    `${dateLabel(dateISO)} · ${formatDM(dateISO)}`;
+
+  const visibleExtras = extraItems.filter((extra) =>
+    visibleDates.includes(extra.dateISO)
+  );
 
   const scopedMeals = (
     scope === EVENING_SCOPE
@@ -144,7 +166,9 @@ export function ShoppingScreen({
   };
 
   const entries = aggregateIngredients(scopedMeals);
-  const done = entries.filter((e) => checked.includes(e.name)).length;
+  const done = entries.filter((entry) =>
+    checked.has(normalizeIngredientKey(entry.name))
+  ).length;
 
   const scopeLabel =
     scope === EVENING_SCOPE
@@ -178,12 +202,158 @@ export function ShoppingScreen({
         lines.push(`- ${dish.name}: ${dish.ingredients.join(", ")}`);
       }
     }
+    if (visibleExtras.length > 0) {
+      lines.push("", "Mua thêm:");
+      for (const dateISO of visibleDates) {
+        const extras = visibleExtras.filter(
+          (extra) => extra.dateISO === dateISO
+        );
+        if (extras.length === 0) continue;
+        lines.push("", `▸ ${extraDateLabel(dateISO)}`);
+        for (const extra of extras) {
+          lines.push(`- ${extra.name}${extra.purchased ? " (đã mua)" : ""}`);
+        }
+      }
+    }
     try {
       await navigator.clipboard.writeText(lines.join("\n"));
       toast.success(`Đã copy danh sách đi chợ ${scopeLabel}`);
     } catch {
       toast.error("Trình duyệt chặn clipboard nên chưa copy được");
     }
+  };
+
+  const toggleIngredient = (name: string) => {
+    const key = normalizeIngredientKey(name);
+    if (!key || pending) return;
+    const nextChecked = !checked.has(key);
+    setChecked((previous) => {
+      const next = new Set(previous);
+      if (nextChecked) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+
+    startTransition(async () => {
+      try {
+        const result = await setShoppingIngredientChecked(
+          weekStart,
+          name,
+          nextChecked
+        );
+        if (result.error) {
+          setChecked((previous) => {
+            const next = new Set(previous);
+            if (nextChecked) next.delete(key);
+            else next.add(key);
+            return next;
+          });
+          toast.error(result.error);
+        }
+      } catch {
+        setChecked((previous) => {
+          const next = new Set(previous);
+          if (nextChecked) next.delete(key);
+          else next.add(key);
+          return next;
+        });
+        toast.error("Không lưu được trạng thái — thử lại nhé");
+      }
+    });
+  };
+
+  const submitExtra = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (pending) return;
+    const name = extraDraft.trim();
+    const dateISO = visibleDates.includes(extraDate)
+      ? extraDate
+      : visibleDates[0];
+    if (!name || !dateISO) {
+      toast.error("Nhập tên món mua thêm");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await addShoppingExtra(dateISO, name);
+        if (result.error) {
+          toast.error(result.error);
+        } else if (result.extra) {
+          setExtraItems((previous) => [...previous, result.extra!]);
+          setExtraDraft("");
+          toast.success("Đã thêm vào danh sách mua thêm");
+        }
+      } catch {
+        toast.error("Không thêm được — thử lại nhé");
+      }
+    });
+  };
+
+  const toggleExtra = (extra: ShoppingExtra) => {
+    if (pending) return;
+    const purchased = !extra.purchased;
+    setExtraItems((previous) =>
+      previous.map((item) =>
+        item.id === extra.id ? { ...item, purchased } : item
+      )
+    );
+
+    startTransition(async () => {
+      try {
+        const result = await setShoppingExtraPurchased(extra.id, purchased);
+        if (result.error) {
+          setExtraItems((previous) =>
+            previous.map((item) =>
+              item.id === extra.id
+                ? { ...item, purchased: extra.purchased }
+                : item
+            )
+          );
+          toast.error(result.error);
+        }
+      } catch {
+        setExtraItems((previous) =>
+          previous.map((item) =>
+            item.id === extra.id
+              ? { ...item, purchased: extra.purchased }
+              : item
+          )
+        );
+        toast.error("Không cập nhật được — thử lại nhé");
+      }
+    });
+  };
+
+  const removeExtra = (extra: ShoppingExtra) => {
+    if (pending) return;
+    const removedAt = extraItems.findIndex((item) => item.id === extra.id);
+    setExtraItems((previous) =>
+      previous.filter((item) => item.id !== extra.id)
+    );
+
+    const restore = () =>
+      setExtraItems((previous) => {
+        if (previous.some((item) => item.id === extra.id)) return previous;
+        const next = [...previous];
+        next.splice(Math.max(0, Math.min(removedAt, next.length)), 0, extra);
+        return next;
+      });
+
+    startTransition(async () => {
+      try {
+        const result = await deleteShoppingExtra(extra.id);
+        if (result.error) {
+          restore();
+          toast.error(result.error);
+        } else {
+          toast.success(`Đã xóa “${extra.name}”`);
+        }
+      } catch {
+        restore();
+        toast.error("Không xóa được — thử lại nhé");
+      }
+    });
   };
 
   return (
@@ -197,10 +367,11 @@ export function ShoppingScreen({
           <ToggleGroup
             type="single"
             value={scope}
-            onValueChange={(v) => v && setScope(v)}
+            onValueChange={onScopeChange}
             variant="outline"
             spacing={2}
             aria-label="Phạm vi đi chợ"
+            disabled={pending}
             className="h-11 w-max lg:h-9"
           >
             {isCurrentWeek ? (
@@ -237,7 +408,20 @@ export function ShoppingScreen({
         />
       </div>
 
-      {shoppableMeals.length === 0 ? (
+      {meals.length === 0 ? (
+        <EmptyState
+          icon={<ShoppingBasket />}
+          title="Chưa có gì để mua"
+          description="Tuần này chưa có thực đơn nên chưa gom được nguyên liệu nào. Bạn vẫn có thể thêm đồ mua riêng bên dưới."
+        >
+          <Button variant="outline" size="lg" asChild className="h-11 lg:h-10">
+            <Link href="/week">
+              <CalendarDays />
+              Mở lịch tuần
+            </Link>
+          </Button>
+        </EmptyState>
+      ) : shoppableMeals.length === 0 ? (
         <EmptyState
           icon={<ShoppingBasket />}
           title="Không có gì phải mua"
@@ -284,6 +468,7 @@ export function ShoppingScreen({
                 variant="outline"
                 size="lg"
                 onClick={onCopy}
+                disabled={pending}
                 className="h-11 shrink-0 lg:h-9"
               >
                 <Copy />
@@ -323,39 +508,193 @@ export function ShoppingScreen({
                       <span className="min-w-0 flex-1">{dish.name}</span>
                     </p>
                     <ul className="divide-y">
-                      {dish.ingredients.map((name) => (
-                        <li key={name}>
-                          <Label className="flex min-h-11 cursor-pointer items-center gap-2.5 px-3.5 py-2.5 font-normal transition-colors hover:bg-muted/40 lg:min-h-10">
-                            <Checkbox
-                              checked={isChecked(name)}
-                              onCheckedChange={() => toggle(name)}
-                              className="size-[18px]"
-                            />
-                            <span
+                      {dish.ingredients.map((name) => {
+                        const ingredientChecked = checked.has(
+                          normalizeIngredientKey(name)
+                        );
+                        return (
+                          <li key={name}>
+                            <Label
                               className={cn(
-                                "min-w-0 flex-1 truncate text-sm font-medium transition-colors",
-                                isChecked(name) &&
-                                  "text-muted-foreground line-through"
+                                "flex min-h-11 cursor-pointer items-center gap-2.5 px-3.5 py-2.5 font-normal transition-colors hover:bg-muted/40 lg:min-h-10",
+                                pending && "cursor-not-allowed opacity-70"
                               )}
                             >
-                              {name}
-                            </span>
-                          </Label>
-                        </li>
-                      ))}
+                              <Checkbox
+                                checked={ingredientChecked}
+                                disabled={pending}
+                                onCheckedChange={() => toggleIngredient(name)}
+                                className="size-[18px]"
+                              />
+                              <span
+                                className={cn(
+                                  "min-w-0 flex-1 truncate text-sm font-medium transition-colors",
+                                  ingredientChecked &&
+                                    "text-muted-foreground line-through"
+                                )}
+                              >
+                                {name}
+                              </span>
+                            </Label>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </Card>
                 ))}
               </div>
             </section>
           ))}
-
-          <p className="text-xs text-muted-foreground">
-            Nguyên liệu dùng chung giữa các món chỉ cần tick một lần là gạch ở
-            mọi chỗ. Các dấu tick lưu trên máy này, theo từng tuần.
-          </p>
         </div>
       )}
+
+      <Card size="sm" className="mt-5">
+        <CardHeader className="gap-1.5 border-b">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Plus className="size-4 text-primary" />
+            Mua thêm
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Thêm gia vị, hoa quả hoặc đồ dùng không nằm trong thực đơn. Danh
+            sách này được dùng chung trong nhà.
+          </p>
+        </CardHeader>
+        <CardContent className="pt-3">
+          <form
+            onSubmit={submitExtra}
+            className="flex flex-col gap-2.5 sm:flex-row sm:items-end"
+          >
+            <div className="min-w-0 flex-1">
+              <Label htmlFor="extra-name" className="mb-1.5 text-xs">
+                Tên đồ mua thêm
+              </Label>
+              <Input
+                id="extra-name"
+                value={extraDraft}
+                onChange={(event) => setExtraDraft(event.target.value)}
+                placeholder="Ví dụ: Chuối, nước mắm..."
+                maxLength={100}
+                disabled={pending}
+                className="h-11 text-sm lg:h-9"
+              />
+            </div>
+            <div className="flex gap-2 sm:shrink-0">
+              <div className="min-w-0 flex-1 sm:w-40 sm:flex-none">
+                <Label htmlFor="extra-date" className="mb-1.5 text-xs">
+                  Ngày mua
+                </Label>
+                <Select
+                  value={extraDate}
+                  onValueChange={setExtraDate}
+                  disabled={pending}
+                >
+                  <SelectTrigger
+                    id="extra-date"
+                    size="lg"
+                    className="h-11 w-full text-[13px] lg:h-9"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {visibleDates.map((dateISO) => (
+                      <SelectItem key={dateISO} value={dateISO}>
+                        {extraDateLabel(dateISO)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={pending}
+                className="mt-[1.375rem] h-11 shrink-0 lg:h-9"
+              >
+                {pending ? <Spinner /> : <Plus />}
+                Thêm
+              </Button>
+            </div>
+          </form>
+
+          {visibleExtras.length === 0 ? (
+            <p className="mt-4 rounded-md border border-dashed px-3 py-3 text-xs text-muted-foreground">
+              Chưa có món mua thêm trong phạm vi này.
+            </p>
+          ) : (
+            <div className="mt-4 flex flex-col gap-4">
+              {visibleDates.map((dateISO) => {
+                const dateExtras = visibleExtras.filter(
+                  (extra) => extra.dateISO === dateISO
+                );
+                if (dateExtras.length === 0) return null;
+                return (
+                  <div key={dateISO}>
+                    <div className="mb-1.5 flex items-baseline gap-2">
+                      <h3 className="text-xs font-semibold">
+                        {dateLabel(dateISO)}
+                      </h3>
+                      <span className="text-[11px] tabular-nums text-muted-foreground">
+                        {formatDM(dateISO)}
+                      </span>
+                    </div>
+                    <ul className="divide-y rounded-md border">
+                      {dateExtras.map((extra) => (
+                        <li
+                          key={extra.id}
+                          className="flex min-h-11 items-center gap-2 px-3 py-1.5"
+                        >
+                          <Label
+                            className={cn(
+                              "min-w-0 flex-1 gap-2.5 font-normal",
+                              pending && "cursor-not-allowed opacity-70"
+                            )}
+                          >
+                            <Checkbox
+                              checked={extra.purchased}
+                              disabled={pending}
+                              onCheckedChange={() => toggleExtra(extra)}
+                              className="size-[18px]"
+                              aria-label={`${extra.purchased ? "Bỏ đánh dấu" : "Đánh dấu"} đã mua ${extra.name}`}
+                            />
+                            <span
+                              className={cn(
+                                "min-w-0 flex-1 truncate text-sm font-medium",
+                                extra.purchased &&
+                                  "text-muted-foreground line-through"
+                              )}
+                            >
+                              {extra.name}
+                            </span>
+                          </Label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Xóa ${extra.name}`}
+                            title={`Xóa ${extra.name}`}
+                            onClick={() => removeExtra(extra)}
+                            disabled={pending}
+                            className="size-11 lg:size-9"
+                          >
+                            <Trash2 />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {meals.length > 0 ? (
+        <p className="mt-4 text-xs text-muted-foreground">
+          Nguyên liệu dùng chung giữa các món chỉ cần tick một lần là gạch ở mọi
+          chỗ. Các dấu tick được lưu chung trong nhà, theo từng tuần.
+        </p>
+      ) : null}
     </>
   );
 }

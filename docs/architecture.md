@@ -28,7 +28,7 @@ Generated Prisma output is disposable: never edit `src/generated/prisma/` direct
 
 ## Server/client boundaries
 
-Protected app pages authenticate with `getSession()`, read through query helpers, and map dates/database records to serializable DTOs before passing data to client components. Client components own forms, sheets, toggles, local state, optimistic attendance feedback, and browser-only storage. Authenticated domain mutations repeat the session check, validate shared inputs where applicable, perform the write, and call `revalidatePath("/", "layout")`; the login/logout entry and exit actions are intentional exceptions.
+Protected app pages authenticate with `getSession()`, read through query helpers, and map dates/database records to serializable DTOs before passing data to client components. Client components own forms, sheets, toggles, local state, and optimistic attendance/shopping feedback; durable state is written through authenticated Server Actions, not browser storage. Authenticated domain mutations repeat the session check, validate shared inputs where applicable, perform the write, and call `revalidatePath("/", "layout")` (shopping mutations revalidate `/shopping`); the login/logout entry and exit actions are intentional exceptions.
 
 Excel import is intentionally two-stage: `parseImportExcel` validates and previews rows without writing, then `importFoods` validates the submitted rows again and writes foods, ingredients, and statistics in a transaction. The action accepts `.xlsx`, limits files to 4MB through `next.config.ts`, and limits imports to 200 rows.
 
@@ -38,6 +38,8 @@ Excel import is intentionally two-stage: `parseImportExcel` validates and previe
 - A `MealPlan` is shared by the household and is unique by `weekStart`; it no longer has an owner foreign key. A meal is unique by plan/date/period and stores `cookedAt` plus an optional household `note`.
 - `MealItem` is unique by meal/position. Generated meals always have a main dish; a side dish is optional and can be removed or added by the plan actions. The schema does not encode the “main is required” rule, so actions/UI must preserve it.
 - `MealAbsence` is a join row meaning that a member does **not** eat a meal. No row means the member eats by default. Its meal/member uniqueness and cascade behavior are schema invariants.
+- `ShoppingIngredientCheck` stores the presence of a normalized ingredient key for a selected `weekStart`; one row is shared by every authenticated household member and one check covers every duplicate ingredient display in that week.
+- `ShoppingExtra` stores a shared, date-keyed item with its purchased state. The shopping page queries the selected week (and Sunday’s next-day boundary when needed), then filters extras to the active scope.
 - Deleting a food cascades its ingredients, statistics, and scheduled meal items. Deleting a member cascades their absence rows; the shared plan and foods remain.
 - Dates use `Asia/Ho_Chi_Minh` through `src/lib/week.ts`, travel through the app as `yyyy-MM-dd`, and map to UTC midnight for Prisma `@db.Date`. Weeks run Monday through Sunday.
 
@@ -51,7 +53,7 @@ Authentication is a compact custom flow in `src/actions/auth.ts` and `src/lib/se
 
 `generateWeek` and `copyLastWeek` replace a target week’s meals inside a transaction. Copying shifts the previous week’s items by seven days and creates fresh meals, so cooked state, attendance rows, and meal notes are not carried over. Individual swaps validate the food type; side removal/addition is handled by dedicated actions.
 
-`markCooked` stores one meal-level completion timestamp and updates statistics for every item in that meal. `undoCooked` reverses the counts and recalculates each affected food’s latest cooked timestamp. `src/lib/shopping.ts` aggregates duplicate ingredient names case-insensitively. The shopping screen stores checked ingredient names locally under `pf-shop-<weekStart>`; the current-week default is “Tối nay và trưa mai”, including the next week’s lunch when the boundary is Sunday.
+`markCooked` stores one meal-level completion timestamp and updates statistics for every item in that meal. `undoCooked` reverses the counts and recalculates each affected food’s latest cooked timestamp. `src/lib/shopping.ts` aggregates duplicate ingredient names with the same normalized case-insensitive key. Shopping checks persist in `shopping_ingredient_checks` by selected `weekStart` (no `localStorage`); the current-week default is “Tối nay và trưa mai”, including the next week’s lunch when the boundary is Sunday. The `Mua thêm` list persists shared `shopping_extras` by calendar date and is shown only for dates in the active scope.
 
 ## Intentional differences and extensions from `spec.md`
 

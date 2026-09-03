@@ -70,6 +70,19 @@ export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>;
 };
 
+export type BoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean;
+};
+
+export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean;
+  _count?: Prisma.NestedIntFilter<$PrismaModel>;
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>;
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>;
+};
+
 export type EnumFoodTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.FoodType | Prisma.EnumFoodTypeFieldRefInput<$PrismaModel>;
   in?: $Enums.FoodType[] | Prisma.ListEnumFoodTypeFieldRefInput<$PrismaModel>;
@@ -281,6 +294,19 @@ export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>;
   _min?: Prisma.NestedDateTimeFilter<$PrismaModel>;
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>;
+};
+
+export type NestedBoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean;
+};
+
+export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean;
+  _count?: Prisma.NestedIntFilter<$PrismaModel>;
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>;
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>;
 };
 
 export type NestedEnumFoodTypeFilter<$PrismaModel = never> = {

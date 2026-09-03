@@ -428,6 +428,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never
 
 export const ModelName = {
   User: "User",
+  ShoppingIngredientCheck: "ShoppingIngredientCheck",
+  ShoppingExtra: "ShoppingExtra",
   Food: "Food",
   Ingredient: "Ingredient",
   MealPlan: "MealPlan",
@@ -458,6 +460,8 @@ export type TypeMap<
   meta: {
     modelProps:
       | "user"
+      | "shoppingIngredientCheck"
+      | "shoppingExtra"
       | "food"
       | "ingredient"
       | "mealPlan"
@@ -540,6 +544,158 @@ export type TypeMap<
           args: Prisma.UserCountArgs<ExtArgs>;
           result:
             | runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
+    ShoppingIngredientCheck: {
+      payload: Prisma.$ShoppingIngredientCheckPayload<ExtArgs>;
+      fields: Prisma.ShoppingIngredientCheckFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.ShoppingIngredientCheckFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.ShoppingIngredientCheckFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>;
+        };
+        findFirst: {
+          args: Prisma.ShoppingIngredientCheckFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.ShoppingIngredientCheckFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>;
+        };
+        findMany: {
+          args: Prisma.ShoppingIngredientCheckFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>[];
+        };
+        create: {
+          args: Prisma.ShoppingIngredientCheckCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>;
+        };
+        createMany: {
+          args: Prisma.ShoppingIngredientCheckCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.ShoppingIngredientCheckCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>[];
+        };
+        delete: {
+          args: Prisma.ShoppingIngredientCheckDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>;
+        };
+        update: {
+          args: Prisma.ShoppingIngredientCheckUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>;
+        };
+        deleteMany: {
+          args: Prisma.ShoppingIngredientCheckDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.ShoppingIngredientCheckUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.ShoppingIngredientCheckUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>[];
+        };
+        upsert: {
+          args: Prisma.ShoppingIngredientCheckUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingIngredientCheckPayload>;
+        };
+        aggregate: {
+          args: Prisma.ShoppingIngredientCheckAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShoppingIngredientCheck>;
+        };
+        groupBy: {
+          args: Prisma.ShoppingIngredientCheckGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingIngredientCheckGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.ShoppingIngredientCheckCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.ShoppingIngredientCheckCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
+    ShoppingExtra: {
+      payload: Prisma.$ShoppingExtraPayload<ExtArgs>;
+      fields: Prisma.ShoppingExtraFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.ShoppingExtraFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.ShoppingExtraFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>;
+        };
+        findFirst: {
+          args: Prisma.ShoppingExtraFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.ShoppingExtraFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>;
+        };
+        findMany: {
+          args: Prisma.ShoppingExtraFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>[];
+        };
+        create: {
+          args: Prisma.ShoppingExtraCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>;
+        };
+        createMany: {
+          args: Prisma.ShoppingExtraCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.ShoppingExtraCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>[];
+        };
+        delete: {
+          args: Prisma.ShoppingExtraDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>;
+        };
+        update: {
+          args: Prisma.ShoppingExtraUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>;
+        };
+        deleteMany: {
+          args: Prisma.ShoppingExtraDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.ShoppingExtraUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.ShoppingExtraUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>[];
+        };
+        upsert: {
+          args: Prisma.ShoppingExtraUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingExtraPayload>;
+        };
+        aggregate: {
+          args: Prisma.ShoppingExtraAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShoppingExtra>;
+        };
+        groupBy: {
+          args: Prisma.ShoppingExtraGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingExtraGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.ShoppingExtraCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.ShoppingExtraCountAggregateOutputType>
             | number;
         };
       };
@@ -1126,6 +1282,28 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum =
   (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
 
+export const ShoppingIngredientCheckScalarFieldEnum = {
+  id: "id",
+  weekStart: "weekStart",
+  ingredientKey: "ingredientKey",
+  createdAt: "createdAt",
+} as const;
+
+export type ShoppingIngredientCheckScalarFieldEnum =
+  (typeof ShoppingIngredientCheckScalarFieldEnum)[keyof typeof ShoppingIngredientCheckScalarFieldEnum];
+
+export const ShoppingExtraScalarFieldEnum = {
+  id: "id",
+  date: "date",
+  name: "name",
+  purchased: "purchased",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+} as const;
+
+export type ShoppingExtraScalarFieldEnum =
+  (typeof ShoppingExtraScalarFieldEnum)[keyof typeof ShoppingExtraScalarFieldEnum];
+
 export const FoodScalarFieldEnum = {
   id: "id",
   name: "name",
@@ -1254,6 +1432,14 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<
   $PrismaModel,
   "DateTime[]"
+>;
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "Boolean"
 >;
 
 /**
@@ -1478,6 +1664,8 @@ export type PrismaClientOptions =
   PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter;
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit;
+  shoppingIngredientCheck?: Prisma.ShoppingIngredientCheckOmit;
+  shoppingExtra?: Prisma.ShoppingExtraOmit;
   food?: Prisma.FoodOmit;
   ingredient?: Prisma.IngredientOmit;
   mealPlan?: Prisma.MealPlanOmit;

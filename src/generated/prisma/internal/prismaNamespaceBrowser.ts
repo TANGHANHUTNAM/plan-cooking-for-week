@@ -55,6 +55,8 @@ export const AnyNull = runtime.AnyNull;
 
 export const ModelName = {
   User: "User",
+  ShoppingIngredientCheck: "ShoppingIngredientCheck",
+  ShoppingExtra: "ShoppingExtra",
   Food: "Food",
   Ingredient: "Ingredient",
   MealPlan: "MealPlan",
@@ -90,6 +92,28 @@ export const UserScalarFieldEnum = {
 
 export type UserScalarFieldEnum =
   (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
+
+export const ShoppingIngredientCheckScalarFieldEnum = {
+  id: "id",
+  weekStart: "weekStart",
+  ingredientKey: "ingredientKey",
+  createdAt: "createdAt",
+} as const;
+
+export type ShoppingIngredientCheckScalarFieldEnum =
+  (typeof ShoppingIngredientCheckScalarFieldEnum)[keyof typeof ShoppingIngredientCheckScalarFieldEnum];
+
+export const ShoppingExtraScalarFieldEnum = {
+  id: "id",
+  date: "date",
+  name: "name",
+  purchased: "purchased",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+} as const;
+
+export type ShoppingExtraScalarFieldEnum =
+  (typeof ShoppingExtraScalarFieldEnum)[keyof typeof ShoppingExtraScalarFieldEnum];
 
 export const FoodScalarFieldEnum = {
   id: "id",
