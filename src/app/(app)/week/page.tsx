@@ -17,6 +17,7 @@ import { DayCard } from "@/components/day-card";
 import { WeekSwitcher } from "@/components/week-switcher";
 import { GenerateWeekButton } from "@/components/generate-week-button";
 import { CopyLastWeekButton } from "@/components/copy-last-week-button";
+import { PlanHistoryButton } from "@/components/plan-history-button";
 
 export const metadata: Metadata = { title: "Lịch tuần" };
 
@@ -56,7 +57,7 @@ export default async function WeekPage({
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <WeekSwitcher weekStart={weekStart} basePath="/week" />
-        <div className="flex flex-1 gap-2 sm:flex-none">
+        <div className="flex flex-1 flex-wrap gap-2 sm:flex-none">
           <GenerateWeekButton
             weekStart={weekStart}
             hasPlan={hasPlan}
@@ -65,6 +66,10 @@ export default async function WeekPage({
           <CopyLastWeekButton
             weekStart={weekStart}
             hasPlan={hasPlan}
+            className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-10"
+          />
+          <PlanHistoryButton
+            weekStart={weekStart}
             className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-10"
           />
         </div>

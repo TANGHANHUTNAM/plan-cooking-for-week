@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { copyLastWeek } from "@/actions/plans";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { toastPlanReplaced } from "@/components/plan-undo-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +34,9 @@ export function CopyLastWeekButton({
     startTransition(async () => {
       const res = await copyLastWeek(weekStart);
       if (res.error) toast.error(res.error);
-      else toast.success("Đã copy thực đơn tuần trước");
+      else {
+        toastPlanReplaced("Đã copy thực đơn tuần trước", res.snapshotId);
+      }
     });
 
   return (
@@ -55,7 +58,7 @@ export function CopyLastWeekButton({
             <AlertDialogTitle>Copy tuần trước?</AlertDialogTitle>
             <AlertDialogDescription>
               Thực đơn hiện tại của tuần này sẽ được thay bằng bản copy của tuần
-              trước.
+              trước. Bản hiện tại được lưu vào Lịch sử nên vẫn khôi phục được.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

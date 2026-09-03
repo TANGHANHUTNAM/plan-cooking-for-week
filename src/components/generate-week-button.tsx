@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { generateWeek } from "@/actions/plans";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { toastPlanReplaced } from "@/components/plan-undo-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +38,9 @@ export function GenerateWeekButton({
     startTransition(async () => {
       const res = await generateWeek(weekStart);
       if (res.error) toast.error(res.error);
-      else toast.success("Đã random thực đơn cho cả tuần");
+      else {
+        toastPlanReplaced("Đã random thực đơn cho cả tuần", res.snapshotId);
+      }
     });
 
   return (
@@ -59,7 +62,8 @@ export function GenerateWeekButton({
             <AlertDialogTitle>Random lại cả tuần?</AlertDialogTitle>
             <AlertDialogDescription>
               Toàn bộ thực đơn tuần này sẽ được thay mới, kể cả những bữa bạn đã
-              chỉnh tay.
+              chỉnh tay. Bản hiện tại được lưu vào Lịch sử nên vẫn khôi phục
+              được.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

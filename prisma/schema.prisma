@@ -17,6 +17,13 @@ enum MealPeriod {
   DINNER
 }
 
+/// Why a week plan was replaced — shown as the label of a history entry
+enum PlanSnapshotReason {
+  RANDOM_WEEK
+  COPY_LAST_WEEK
+  RESTORE
+}
+
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
@@ -30,10 +37,10 @@ model User {
 
 /// One row represents an ingredient bought for the week, shared by the household.
 model ShoppingIngredientCheck {
-  id             String   @id @default(cuid())
-  weekStart      DateTime @db.Date
-  ingredientKey  String
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  weekStart     DateTime @db.Date
+  ingredientKey String
+  createdAt     DateTime @default(now())
 
   @@unique([weekStart, ingredientKey])
   @@index([weekStart])
@@ -88,6 +95,23 @@ model MealPlan {
   // so deleting an account does not affect the weekly plan
   @@unique([weekStart])
   @@map("meal_plans")
+}
+
+/// A full copy of one week's plan, saved right before it is overwritten,
+/// so the household can undo a mis-tapped "Random tuần" and read past menus.
+model PlanSnapshot {
+  id        String             @id @default(cuid())
+  weekStart DateTime           @db.Date
+  reason    PlanSnapshotReason
+  /// Number of meals in the snapshot, so the history list stays readable even if `data` cannot be parsed
+  mealCount Int
+  /// Meals with dishes, notes, cooked state and absences; dish names are stored too
+  /// so history survives a food being renamed or deleted
+  data      Json
+  createdAt DateTime           @default(now())
+
+  @@index([weekStart, createdAt])
+  @@map("plan_snapshots")
 }
 
 model Meal {
