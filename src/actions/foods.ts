@@ -99,6 +99,32 @@ export async function deleteFood(id: string): Promise<{ error?: string }> {
   return {};
 }
 
+export interface ResetFavoritesResult {
+  error?: string;
+  /** How many dishes actually lost a rating — 0 means everything was already unrated. */
+  resetCount?: number;
+}
+
+/**
+ * Clear the favorite rating of every dish at once. Ratings feed the randomization score,
+ * so this deliberately changes which dishes future plans favor; it cannot be undone.
+ */
+export async function resetAllFavorites(): Promise<ResetFavoritesResult> {
+  await requireSession();
+  try {
+    const { count } = await prisma.food.updateMany({
+      where: { favoriteScore: { not: 0 } }, // skip rows already at 0 so the count is meaningful
+      data: { favoriteScore: 0 },
+    });
+    revalidatePath("/", "layout");
+    return { resetCount: count };
+  } catch {
+    return {
+      error: "Không xóa được đánh giá — kiểm tra mạng rồi thử lại nhé",
+    };
+  }
+}
+
 export async function setFavorite(
   id: string,
   score: number

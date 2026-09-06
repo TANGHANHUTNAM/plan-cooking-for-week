@@ -34,6 +34,8 @@ Users can:
 - Edit a dish.
 - Delete a dish.
 - Mark a dish as a favorite.
+- Reset the favorite rating of every dish back to 0 stars in one step. This is confirmed first
+  and cannot be undone; it also removes the favorite bias from randomization (section 5).
 - Record the ingredients that need to be prepared.
 
 Dish information:

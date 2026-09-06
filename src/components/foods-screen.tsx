@@ -55,6 +55,7 @@ import { FOOD_TYPE_META, FoodTypeTile } from "@/components/food-type";
 import { RatingStars } from "@/components/rating-stars";
 import { FoodFormDrawer } from "@/components/food-form-drawer";
 import { ImportFoodsDialog } from "@/components/import-foods-dialog";
+import { ResetRatingsButton } from "@/components/reset-ratings-button";
 
 const FILTERS = [
   ["ALL", "Tất cả", null],
@@ -222,6 +223,8 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
 
   const mains = sorted.filter((f) => f.type === "MAIN");
   const sides = sorted.filter((f) => f.type === "SIDE");
+  // the bulk reset targets every dish, so it ignores the filters and hides when there is nothing to clear
+  const ratedCount = foods.filter((f) => f.favoriteScore > 0).length;
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -230,6 +233,9 @@ export function FoodsScreen({ foods }: { foods: FoodDTO[] }) {
         description={`${foods.length} món đã lưu. Càng nhiều món thì thực đơn random càng ít lặp lại.`}
         actions={
           <>
+            {ratedCount > 0 ? (
+              <ResetRatingsButton ratedCount={ratedCount} />
+            ) : null}
             <Button
               variant="outline"
               size="lg"
