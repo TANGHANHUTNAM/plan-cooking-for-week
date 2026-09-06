@@ -2,6 +2,7 @@
 // (Date -> ISO string, trimming unused fields).
 
 import type { FoodWithMeta, Member, WeekMeal } from "@/lib/queries";
+import { canRandomizeDay } from "@/lib/randomize-policy";
 import { dateToISO } from "@/lib/week";
 
 export interface MemberDTO {
@@ -61,6 +62,8 @@ export interface MealDTO {
   items: MealItemDTO[];
   /** IDs of members who do NOT eat this meal (everyone eats by default). */
   absentUserIds: string[];
+  /** Random controls are only offered from tomorrow onward; the server enforces the same rule. */
+  canRandomize: boolean;
 }
 
 export function mapFood(food: FoodWithMeta): FoodDTO {
@@ -77,9 +80,11 @@ export function mapFood(food: FoodWithMeta): FoodDTO {
 }
 
 export function mapMeal(meal: WeekMeal): MealDTO {
+  const dateISO = dateToISO(meal.date);
   return {
     id: meal.id,
-    dateISO: dateToISO(meal.date),
+    dateISO,
+    canRandomize: canRandomizeDay(dateISO),
     period: meal.period,
     cookedAt: meal.cookedAt ? meal.cookedAt.toISOString() : null,
     note: meal.note,

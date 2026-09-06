@@ -130,6 +130,17 @@ Favorite Score + Frequency Score + Last Cooked Score + Random Weight
 - Prioritize dishes that have not appeared for a long time.
 - Allow a limit on the number of appearances.
 
+## When randomization is allowed
+
+A plan is only worth randomizing while the meals are still ahead of the household:
+
+- Whole-week randomization (and "copy previous week") is limited to a week that has not
+  started yet. The one exception is the current week while it still has no plan at all,
+  so an empty week can still be filled for the first time.
+- Single-dish randomization is allowed only from tomorrow onward. Today and past days are
+  settled: their dishes can still be picked manually or from suggestions, but not rolled again.
+- Weeks that already ended are never randomized or copied over.
+
 Example:
 
 Thịt kho:
@@ -166,7 +177,7 @@ In the weekly calendar:
 
 Users can:
 
-- Randomize the current dish again.
+- Randomize the current dish again (only from tomorrow onward, see section 5).
 - Choose a dish manually.
 - Replace the main dish.
 - Replace the side dish.
@@ -194,6 +205,9 @@ New week:
 Copy previous week
 
 Then edit a few dishes.
+
+It follows the same window as whole-week randomization (section 5): a new week, or the
+current week only while it is still empty.
 
 ---
 

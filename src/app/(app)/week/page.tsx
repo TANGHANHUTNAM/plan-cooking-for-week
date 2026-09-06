@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { getMembers, getWeekPlan } from "@/lib/queries";
 import { mapMeal, mapMember } from "@/lib/dto";
 import type { MealDTO } from "@/lib/dto";
+import { canReplaceWholeWeek } from "@/lib/randomize-policy";
 import {
   DAY_LABELS,
   normalizeWeekParam,
@@ -39,6 +40,8 @@ export default async function WeekPage({
   ]);
   const memberDTOs = members.map(mapMember);
   const hasPlan = (plan?.meals.length ?? 0) > 0;
+  // a week that already started is settled: only new weeks (and a still-empty current week) can be replaced
+  const canReplaceWeek = canReplaceWholeWeek(weekStart, hasPlan, today);
 
   const mealsByDay = new Map<string, { LUNCH?: MealDTO; DINNER?: MealDTO }>();
   for (const meal of plan?.meals ?? []) {
@@ -58,16 +61,20 @@ export default async function WeekPage({
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <WeekSwitcher weekStart={weekStart} basePath="/week" />
         <div className="flex flex-1 flex-wrap gap-2 sm:flex-none">
-          <GenerateWeekButton
-            weekStart={weekStart}
-            hasPlan={hasPlan}
-            className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-11"
-          />
-          <CopyLastWeekButton
-            weekStart={weekStart}
-            hasPlan={hasPlan}
-            className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-11"
-          />
+          {canReplaceWeek ? (
+            <>
+              <GenerateWeekButton
+                weekStart={weekStart}
+                hasPlan={hasPlan}
+                className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-11"
+              />
+              <CopyLastWeekButton
+                weekStart={weekStart}
+                hasPlan={hasPlan}
+                className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-11"
+              />
+            </>
+          ) : null}
           <PlanHistoryButton
             weekStart={weekStart}
             className="h-11 flex-1 text-sm font-semibold sm:flex-none sm:px-5 lg:h-10"
@@ -79,19 +86,27 @@ export default async function WeekPage({
         <EmptyState
           icon={<CalendarDays />}
           title="Tuần này chưa có thực đơn"
-          description="Random một thực đơn mới, hoặc copy tuần trước rồi chỉnh vài món cho khác đi."
+          description={
+            canReplaceWeek
+              ? "Random một thực đơn mới, hoặc copy tuần trước rồi chỉnh vài món cho khác đi."
+              : "Tuần này đã qua nên không lên thực đơn nữa được. Chọn một tuần mới để random nhé."
+          }
         >
-          <GenerateWeekButton
-            weekStart={weekStart}
-            hasPlan={false}
-            label="Random thực đơn"
-            className="h-11 px-6 text-sm font-semibold"
-          />
-          <CopyLastWeekButton
-            weekStart={weekStart}
-            hasPlan={false}
-            className="h-11 px-6 text-sm font-semibold"
-          />
+          {canReplaceWeek ? (
+            <>
+              <GenerateWeekButton
+                weekStart={weekStart}
+                hasPlan={false}
+                label="Random thực đơn"
+                className="h-11 px-6 text-sm font-semibold"
+              />
+              <CopyLastWeekButton
+                weekStart={weekStart}
+                hasPlan={false}
+                className="h-11 px-6 text-sm font-semibold"
+              />
+            </>
+          ) : null}
         </EmptyState>
       ) : (
         <div className="grid auto-rows-fr items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-7">

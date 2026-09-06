@@ -13,14 +13,11 @@ import { EmptyState } from "@/components/empty-state";
 import { MealCard, PeriodChip } from "@/components/meal-card";
 import { GenerateWeekButton } from "@/components/generate-week-button";
 
-/** Placeholder for an unscheduled meal — keeps the lunch/dinner columns balanced. */
-function MissingMealCard({
-  period,
-  weekStart,
-}: {
-  period: "LUNCH" | "DINNER";
-  weekStart: string;
-}) {
+/**
+ * Placeholder for an unscheduled meal — keeps the lunch/dinner columns balanced.
+ * The week is already under way here, so it offers no random: today is no longer randomizable.
+ */
+function MissingMealCard({ period }: { period: "LUNCH" | "DINNER" }) {
   return (
     <Card className="h-full border border-dashed bg-transparent ring-0">
       <CardContent className="flex h-full flex-col items-center justify-center gap-3 py-10 text-center">
@@ -28,13 +25,9 @@ function MissingMealCard({
         <p className="text-sm font-medium">
           Chưa có bữa {period === "LUNCH" ? "trưa" : "tối"} trong thực đơn
         </p>
-        <GenerateWeekButton
-          weekStart={weekStart}
-          hasPlan
-          variant="outline"
-          label="Random lại tuần"
-          className="h-11 lg:h-9"
-        />
+        <p className="text-sm text-muted-foreground">
+          Thêm tay ở Lịch tuần, hoặc random cho một tuần mới.
+        </p>
       </CardContent>
     </Card>
   );
@@ -121,12 +114,12 @@ export default async function TodayPage() {
             {lunch ? (
               <MealCard meal={lunch} members={memberDTOs} variant="full" />
             ) : (
-              <MissingMealCard period="LUNCH" weekStart={weekStart} />
+              <MissingMealCard period="LUNCH" />
             )}
             {dinner ? (
               <MealCard meal={dinner} members={memberDTOs} variant="full" />
             ) : (
-              <MissingMealCard period="DINNER" weekStart={weekStart} />
+              <MissingMealCard period="DINNER" />
             )}
           </div>
         </div>

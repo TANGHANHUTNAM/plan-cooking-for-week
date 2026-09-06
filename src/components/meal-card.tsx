@@ -392,6 +392,7 @@ export function MealCard({
       mealId={meal.id}
       position={sheet.position}
       item={sheet.item}
+      canRandomize={meal.canRandomize}
       open={sheet !== null}
       onOpenChange={(open) => {
         if (!open) setSheet(null);

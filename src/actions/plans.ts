@@ -21,6 +21,12 @@ import {
   type CandidateFood,
 } from "@/lib/random-engine";
 import {
+  canRandomizeDay,
+  canReplaceWholeWeek,
+  RANDOM_DAY_BLOCKED_MESSAGE,
+  wholeWeekBlockedMessage,
+} from "@/lib/randomize-policy";
+import {
   addDaysISO,
   dateToISO,
   isoToDate,
@@ -123,6 +129,49 @@ function snapshotCreateData(
   };
 }
 
+/** Arbitrary namespace so week locks cannot collide with another advisory lock in this database. */
+const WEEK_LOCK_NAMESPACE = 4711;
+
+/** Raised inside a transaction when the week policy rejects the write; carries the user-facing text. */
+class WholeWeekBlockedError extends Error {}
+
+/**
+ * Guard for the two writes that replace a whole week. Returns an error message when the week is
+ * already under way, so a mis-tap cannot wipe meals the household has started cooking.
+ * `verb` is the Vietnamese action word used in the message ("random", "copy").
+ */
+async function wholeWeekBlockReason(
+  client: Prisma.TransactionClient,
+  weekStart: string,
+  verb: string
+): Promise<string | null> {
+  const hasPlan =
+    (await client.meal.count({
+      where: { mealPlan: { weekStart: isoToDate(weekStart) } },
+    })) > 0;
+  return canReplaceWholeWeek(weekStart, hasPlan)
+    ? null
+    : wholeWeekBlockedMessage(weekStart, verb);
+}
+
+/**
+ * Re-run the week guard with a transaction-scoped lock on that week held.
+ *
+ * The check outside the transaction is only a fast path: "the current week is still empty" is a
+ * read that another request can invalidate before this one writes, so two concurrent generate/copy
+ * calls could both see an empty week and the second would wipe the plan the first just created.
+ * The advisory lock serializes the check together with the delete/create that depends on it.
+ */
+async function assertWeekReplaceableInTx(
+  tx: Prisma.TransactionClient,
+  weekStart: string,
+  verb: string
+): Promise<void> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${WEEK_LOCK_NAMESPACE}::int4, hashtext(${weekStart})::int4)`;
+  const blocked = await wholeWeekBlockReason(tx, weekStart, verb);
+  if (blocked) throw new WholeWeekBlockedError(blocked);
+}
+
 /** The manual swap picker gets only the fields it renders, and only on demand. */
 export async function loadSwapFoods(): Promise<{
   error?: string;
@@ -164,6 +213,8 @@ export async function generateWeek(
 ): Promise<PlanWriteResult> {
   await requireSession();
   const ws = normalizeWeekParam(weekStart);
+  const blocked = await wholeWeekBlockReason(prisma, ws, "random");
+  if (blocked) return { error: blocked };
 
   const all = await loadCandidates();
   const mains = all.filter((f) => f.type === "MAIN");
@@ -183,6 +234,7 @@ export async function generateWeek(
     // minimize round trips — the remote Supabase DB can exceed the transaction timeout
     snapshotId = await prisma.$transaction(
       async (tx) => {
+        await assertWeekReplaceableInTx(tx, ws, "random");
         const saved = previous
           ? await tx.planSnapshot.create({
               data: snapshotCreateData(ws, "RANDOM_WEEK", previous),
@@ -229,7 +281,8 @@ export async function generateWeek(
       },
       { timeout: 20000 }
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof WholeWeekBlockedError) return { error: error.message };
     return { error: "Không lưu được thực đơn — kiểm tra mạng rồi thử lại nhé" };
   }
 
@@ -244,6 +297,8 @@ export async function copyLastWeek(
 ): Promise<PlanWriteResult> {
   await requireSession();
   const ws = normalizeWeekParam(weekStart);
+  const blocked = await wholeWeekBlockReason(prisma, ws, "copy");
+  if (blocked) return { error: blocked };
   const prevWs = addDaysISO(ws, -7);
 
   const prevPlan = await prisma.mealPlan.findUnique({
@@ -260,6 +315,7 @@ export async function copyLastWeek(
   try {
     snapshotId = await prisma.$transaction(
       async (tx) => {
+        await assertWeekReplaceableInTx(tx, ws, "copy");
         const saved = previous
           ? await tx.planSnapshot.create({
               data: snapshotCreateData(ws, "COPY_LAST_WEEK", previous),
@@ -301,7 +357,8 @@ export async function copyLastWeek(
       },
       { timeout: 20000 }
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof WholeWeekBlockedError) return { error: error.message };
     return { error: "Không copy được — kiểm tra mạng rồi thử lại nhé" };
   }
 
@@ -500,7 +557,7 @@ async function loadItemContext(mealItemId: string) {
       if (isSameDay) sameDay.add(it.foodId);
     }
   }
-  return { item, used, sameDay };
+  return { item, used, sameDay, dateISO: itemDate };
 }
 
 /** Replace one food with a smart random choice. */
@@ -510,6 +567,9 @@ export async function swapItemRandom(
   await requireSession();
   const ctx = await loadItemContext(mealItemId);
   if (!ctx) return { error: "Không tìm thấy món trong lịch" };
+  if (!canRandomizeDay(ctx.dateISO)) {
+    return { error: RANDOM_DAY_BLOCKED_MESSAGE };
+  }
 
   const pool = (await loadCandidates()).filter(
     (f) => f.type === ctx.item.position
@@ -646,7 +706,7 @@ async function loadSlotContext(mealId: string) {
       if (isSameDay) sameDay.add(it.foodId);
     }
   }
-  return { meal, used, sameDay };
+  return { meal, used, sameDay, dateISO: mealDate };
 }
 
 /** Remove the side dish from a meal — every meal must keep its main dish. */
@@ -703,6 +763,10 @@ export async function addMealItem(
       return { error: `Món này không phải ${positionLabel}` };
     }
   } else {
+    // a manual pick stays available for any day; only the random path is limited to future days
+    if (!canRandomizeDay(ctx.dateISO)) {
+      return { error: RANDOM_DAY_BLOCKED_MESSAGE };
+    }
     const pool = (await loadCandidates()).filter((f) => f.type === position);
     const picked = pickFood(pool, {
       usedIds: ctx.used,

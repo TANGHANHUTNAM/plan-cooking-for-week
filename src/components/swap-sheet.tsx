@@ -81,17 +81,21 @@ function FoodOption({
  * Bottom sheet for one food position in a meal.
  * - item != null: replace the existing food (side dishes also offer "remove side dish").
  * - item == null: empty position -> add a food (random / suggested / manual).
+ * Randomizing is offered only from tomorrow onward; suggestions and the manual list stay
+ * available for today and past days.
  */
 export function SwapSheet({
   mealId,
   position,
   item,
+  canRandomize,
   open,
   onOpenChange,
 }: {
   mealId: string;
   position: "MAIN" | "SIDE";
   item: SwapItemDTO | null;
+  canRandomize: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -222,16 +226,18 @@ export function SwapSheet({
       }
     >
       <div className="flex flex-col gap-6">
-        <Button
-          onClick={onRandom}
-          disabled={pending}
-          variant="secondary"
-          size="lg"
-          className="h-11 w-full text-sm font-semibold"
-        >
-          {pending ? <Spinner /> : <Dices />}
-          {isAddMode ? `Random ${positionLabel}` : "Random món khác"}
-        </Button>
+        {canRandomize ? (
+          <Button
+            onClick={onRandom}
+            disabled={pending}
+            variant="secondary"
+            size="lg"
+            className="h-11 w-full text-sm font-semibold"
+          >
+            {pending ? <Spinner /> : <Dices />}
+            {isAddMode ? `Random ${positionLabel}` : "Random món khác"}
+          </Button>
+        ) : null}
 
         <section>
           <h3 className="mb-3 text-base font-semibold">Gợi ý hợp bữa này</h3>
