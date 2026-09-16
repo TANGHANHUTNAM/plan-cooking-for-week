@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { CircleSlash, Dices, Search, SearchX, X } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+  CircleSlash,
+  Dices,
+  PackageOpen,
+  Search,
+  SearchX,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   addMealItem,
@@ -13,7 +20,7 @@ import {
   swapItemRandom,
   type SuggestionDTO,
 } from "@/actions/plans";
-import type { SwapFoodDTO, SwapItemDTO } from "@/lib/dto";
+import type { SpinTarget, SwapFoodDTO, SwapItemDTO } from "@/lib/dto";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -35,6 +42,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { FoodTypeTile } from "@/components/food-type";
 import { RatingStars } from "@/components/rating-stars";
 import { ResponsiveSheet } from "@/components/responsive-sheet";
+import { FoodChestStage } from "@/components/food-chest-stage";
 
 function cookedLabel(total: number): string {
   return total > 0 ? `đã nấu ${total} lần` : "chưa nấu lần nào";
@@ -86,6 +94,7 @@ function FoodOption({
  */
 export function SwapSheet({
   mealId,
+  period,
   position,
   item,
   canRandomize,
@@ -93,6 +102,7 @@ export function SwapSheet({
   onOpenChange,
 }: {
   mealId: string;
+  period: "LUNCH" | "DINNER";
   position: "MAIN" | "SIDE";
   item: SwapItemDTO | null;
   canRandomize: boolean;
@@ -105,9 +115,20 @@ export function SwapSheet({
   const [foodsError, setFoodsError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
+  const [chestOpen, setChestOpen] = useState(false);
 
   const positionLabel = position === "MAIN" ? "món chính" : "món phụ";
   const isAddMode = item === null;
+
+  const spinTarget = useMemo<SpinTarget>(
+    () => ({
+      mealId,
+      position,
+      itemId: item?.id ?? null,
+      expectedFoodId: item?.food.id ?? null,
+    }),
+    [item?.food.id, item?.id, mealId, position]
+  );
 
   // The sheet mounts only after a swap control is invoked, so load its data on demand.
   useEffect(() => {
@@ -204,6 +225,7 @@ export function SwapSheet({
     <ResponsiveSheet
       open={open}
       onOpenChange={onOpenChange}
+      tone={chestOpen ? "chest" : "default"}
       icon={
         <FoodTypeTile
           type={position}
@@ -211,9 +233,17 @@ export function SwapSheet({
           iconClassName="size-4"
         />
       }
-      title={isAddMode ? `Thêm ${positionLabel}` : `Đổi ${positionLabel}`}
+      title={
+        chestOpen
+          ? "Mở hòm món"
+          : isAddMode
+            ? `Thêm ${positionLabel}`
+            : `Đổi ${positionLabel}`
+      }
       description={
-        isAddMode ? (
+        chestOpen ? (
+          `Quay một món cho ${period === "LUNCH" ? "bữa trưa" : "bữa tối"}. Kết quả chỉ được gắn sau khi bạn xác nhận.`
+        ) : isAddMode ? (
           `Bữa này đang chưa có ${positionLabel}.`
         ) : (
           <>
@@ -225,124 +255,148 @@ export function SwapSheet({
         )
       }
     >
-      <div className="flex flex-col gap-6">
-        {canRandomize ? (
-          <Button
-            onClick={onRandom}
-            disabled={pending}
-            variant="secondary"
-            size="lg"
-            className="h-11 w-full text-sm font-semibold"
-          >
-            {pending ? <Spinner /> : <Dices />}
-            {isAddMode ? `Random ${positionLabel}` : "Random món khác"}
-          </Button>
-        ) : null}
+      {chestOpen ? (
+        <FoodChestStage
+          target={spinTarget}
+          period={period}
+          previewFoods={(foods ?? [])
+            .filter((food) => food.type === position)
+            .slice(0, 7)}
+          onBack={() => setChestOpen(false)}
+          onCommitted={() => onOpenChange(false)}
+        />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {canRandomize ? (
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={onRandom}
+                disabled={pending}
+                variant="secondary"
+                size="lg"
+                className="h-11 w-full text-sm font-semibold"
+              >
+                {pending ? <Spinner /> : <Dices />}
+                {isAddMode ? `Random ${positionLabel}` : "Random món khác"}
+              </Button>
+              <Button
+                onClick={() => setChestOpen(true)}
+                disabled={pending}
+                variant="outline"
+                size="lg"
+                className="h-11 w-full border-primary/35 text-sm font-semibold text-primary hover:bg-primary/5"
+              >
+                <PackageOpen />
+                Mở hòm món
+              </Button>
+            </div>
+          ) : null}
 
-        <section>
-          <h3 className="mb-3 text-base font-semibold">Gợi ý hợp bữa này</h3>
-          <ItemGroup className="gap-2">
-            {suggestions === null ? (
-              <>
-                <Skeleton className="h-[54px] rounded-md" />
-                <Skeleton className="h-[54px] rounded-md" />
-                <Skeleton className="h-[54px] rounded-md" />
-              </>
-            ) : suggestionError ? (
-              <p className="text-sm text-destructive">{suggestionError}</p>
-            ) : suggestions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Chưa gợi ý được món nào. Thêm món mới ở tab Món ăn trước nhé.
-              </p>
-            ) : (
-              suggestions.map((s) => (
-                <FoodOption
-                  key={s.id}
-                  name={s.name}
-                  method={s.cookingMethod}
-                  detail={cookedLabel(s.totalCooked)}
-                  score={s.favoriteScore}
-                  onPick={() => onPick(s.id, s.name)}
-                  disabled={pending}
-                />
-              ))
-            )}
-          </ItemGroup>
-        </section>
-
-        <section>
-          <h3 className="mb-3 text-base font-semibold">
-            Hoặc chọn từ danh sách
-          </h3>
-          <InputGroup className="mb-3 h-11">
-            <InputGroupAddon>
-              <Search />
-            </InputGroupAddon>
-            <InputGroupInput
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm theo tên hoặc cách chế biến"
-              aria-label="Tìm món ăn"
-              className="h-11 text-base"
-            />
-            {query ? (
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton
-                  size="icon-xs"
-                  aria-label="Xóa từ khóa tìm"
-                  onClick={() => setQuery("")}
-                >
-                  <X />
-                </InputGroupButton>
-              </InputGroupAddon>
-            ) : null}
-          </InputGroup>
-
-          {foods === null ? (
+          <section>
+            <h3 className="mb-3 text-base font-semibold">Gợi ý hợp bữa này</h3>
             <ItemGroup className="gap-2">
-              <Skeleton className="h-[54px] rounded-md" />
-              <Skeleton className="h-[54px] rounded-md" />
-              <Skeleton className="h-[54px] rounded-md" />
-            </ItemGroup>
-          ) : foodsError ? (
-            <p className="py-3 text-sm text-destructive">{foodsError}</p>
-          ) : filtered.length === 0 ? (
-            <p className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
-              <SearchX className="size-4 shrink-0" />
-              Không có món nào khớp từ khóa này.
-            </p>
-          ) : (
-            <ScrollArea className="scrollbar-thin -mr-2 h-60 max-h-60 pr-2">
-              <ItemGroup className="gap-2">
-                {filtered.map((f) => (
+              {suggestions === null ? (
+                <>
+                  <Skeleton className="h-[54px] rounded-md" />
+                  <Skeleton className="h-[54px] rounded-md" />
+                  <Skeleton className="h-[54px] rounded-md" />
+                </>
+              ) : suggestionError ? (
+                <p className="text-sm text-destructive">{suggestionError}</p>
+              ) : suggestions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Chưa gợi ý được món nào. Thêm món mới ở tab Món ăn trước nhé.
+                </p>
+              ) : (
+                suggestions.map((s) => (
                   <FoodOption
-                    key={f.id}
-                    name={f.name}
-                    method={f.cookingMethod}
-                    detail={cookedLabel(f.totalCooked)}
-                    score={f.favoriteScore}
-                    onPick={() => onPick(f.id, f.name)}
+                    key={s.id}
+                    name={s.name}
+                    method={s.cookingMethod}
+                    detail={cookedLabel(s.totalCooked)}
+                    score={s.favoriteScore}
+                    onPick={() => onPick(s.id, s.name)}
                     disabled={pending}
                   />
-                ))}
-              </ItemGroup>
-            </ScrollArea>
-          )}
-        </section>
+                ))
+              )}
+            </ItemGroup>
+          </section>
 
-        {item && position === "SIDE" ? (
-          <Button
-            onClick={onRemoveSide}
-            disabled={pending}
-            variant="outline"
-            size="lg"
-            className="h-10 w-full text-sm text-muted-foreground"
-          >
-            {pending ? <Spinner /> : <CircleSlash />}
-            Bữa này không ăn món phụ
-          </Button>
-        ) : null}
-      </div>
+          <section>
+            <h3 className="mb-3 text-base font-semibold">
+              Hoặc chọn từ danh sách
+            </h3>
+            <InputGroup className="mb-3 h-11">
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupInput
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Tìm theo tên hoặc cách chế biến"
+                aria-label="Tìm món ăn"
+                className="h-11 text-base"
+              />
+              {query ? (
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-xs"
+                    aria-label="Xóa từ khóa tìm"
+                    onClick={() => setQuery("")}
+                  >
+                    <X />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              ) : null}
+            </InputGroup>
+
+            {foods === null ? (
+              <ItemGroup className="gap-2">
+                <Skeleton className="h-[54px] rounded-md" />
+                <Skeleton className="h-[54px] rounded-md" />
+                <Skeleton className="h-[54px] rounded-md" />
+              </ItemGroup>
+            ) : foodsError ? (
+              <p className="py-3 text-sm text-destructive">{foodsError}</p>
+            ) : filtered.length === 0 ? (
+              <p className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
+                <SearchX className="size-4 shrink-0" />
+                Không có món nào khớp từ khóa này.
+              </p>
+            ) : (
+              <ScrollArea className="scrollbar-thin -mr-2 h-60 max-h-60 pr-2">
+                <ItemGroup className="gap-2">
+                  {filtered.map((f) => (
+                    <FoodOption
+                      key={f.id}
+                      name={f.name}
+                      method={f.cookingMethod}
+                      detail={cookedLabel(f.totalCooked)}
+                      score={f.favoriteScore}
+                      onPick={() => onPick(f.id, f.name)}
+                      disabled={pending}
+                    />
+                  ))}
+                </ItemGroup>
+              </ScrollArea>
+            )}
+          </section>
+
+          {item && position === "SIDE" ? (
+            <Button
+              onClick={onRemoveSide}
+              disabled={pending}
+              variant="outline"
+              size="lg"
+              className="h-10 w-full text-sm text-muted-foreground"
+            >
+              {pending ? <Spinner /> : <CircleSlash />}
+              Bữa này không ăn món phụ
+            </Button>
+          ) : null}
+        </div>
+      )}
     </ResponsiveSheet>
   );
 }

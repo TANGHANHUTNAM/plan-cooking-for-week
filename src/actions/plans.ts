@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { SwapFoodDTO } from "@/lib/dto";
+import type { FoodSpinResultDTO, SpinTarget, SwapFoodDTO } from "@/lib/dto";
 import {
   groupSnapshotByDay,
   parsePlanSnapshotData,
@@ -20,6 +20,11 @@ import {
   suggestFoods,
   type CandidateFood,
 } from "@/lib/random-engine";
+import {
+  buildFoodChestReel,
+  foodChestLabel,
+  toSpinFood,
+} from "@/lib/food-chest";
 import {
   canRandomizeDay,
   canReplaceWholeWeek,
@@ -54,6 +59,7 @@ async function loadCandidates(): Promise<CandidateFood[]> {
       id: true,
       name: true,
       type: true,
+      cookingMethod: true,
       favoriteScore: true,
       statistic: { select: { totalCooked: true, lastCookedAt: true } },
     },
@@ -62,6 +68,7 @@ async function loadCandidates(): Promise<CandidateFood[]> {
     id: f.id,
     name: f.name,
     type: f.type,
+    cookingMethod: f.cookingMethod,
     favoriteScore: f.favoriteScore,
     totalCooked: f.statistic?.totalCooked ?? 0,
     lastCookedAt: f.statistic?.lastCookedAt ?? null,
@@ -707,6 +714,205 @@ async function loadSlotContext(mealId: string) {
     }
   }
   return { meal, used, sameDay, dateISO: mealDate };
+}
+
+const SPIN_STALE_MESSAGE = "Kết quả đã thay đổi — quay lại và mở hòm lại nhé";
+
+function isSpinTarget(value: unknown): value is SpinTarget {
+  if (!value || typeof value !== "object") return false;
+  const target = value as Partial<SpinTarget>;
+  return (
+    typeof target.mealId === "string" &&
+    target.mealId.length > 0 &&
+    (target.position === "MAIN" || target.position === "SIDE") &&
+    (target.itemId === null ||
+      (typeof target.itemId === "string" && target.itemId.length > 0)) &&
+    (target.expectedFoodId === undefined ||
+      target.expectedFoodId === null ||
+      (typeof target.expectedFoodId === "string" &&
+        target.expectedFoodId.length > 0))
+  );
+}
+
+type SpinContext = Awaited<ReturnType<typeof loadSpinContext>>;
+
+/** Load one slot and the same week/day exclusions used by the existing random engine. */
+async function loadSpinContext(target: SpinTarget) {
+  const meal = await prisma.meal.findUnique({
+    where: { id: target.mealId },
+    include: {
+      items: true,
+      mealPlan: { include: { meals: { include: { items: true } } } },
+    },
+  });
+  if (!meal) return null;
+
+  const item = target.itemId
+    ? (meal.items.find((candidate) => candidate.id === target.itemId) ?? null)
+    : null;
+  const itemInPosition = meal.items.find(
+    (candidate) => candidate.position === target.position
+  );
+
+  // A null itemId means the UI opened an empty position. A non-null itemId must
+  // still point to the position that was originally opened.
+  if (target.itemId ? item?.position !== target.position : itemInPosition) {
+    return null;
+  }
+
+  const used = new Set<string>();
+  const sameDay = new Set<string>();
+  const usedCounts = new Map<string, number>();
+  const mealDate = dateToISO(meal.date);
+
+  for (const weekMeal of meal.mealPlan.meals) {
+    const isSameDay = dateToISO(weekMeal.date) === mealDate;
+    for (const mealItem of weekMeal.items) {
+      if (mealItem.id === item?.id) continue;
+      used.add(mealItem.foodId);
+      usedCounts.set(
+        mealItem.foodId,
+        (usedCounts.get(mealItem.foodId) ?? 0) + 1
+      );
+      if (isSameDay) sameDay.add(mealItem.foodId);
+    }
+  }
+
+  return { meal, item, used, sameDay, usedCounts, dateISO: mealDate };
+}
+
+function spinCandidateIsAllowed(
+  foodId: string,
+  pool: CandidateFood[],
+  context: NonNullable<SpinContext>
+): boolean {
+  const avoid = new Set(context.sameDay);
+  if (context.item) avoid.add(context.item.foodId);
+
+  const strict = pool.filter(
+    (food) => !context.used.has(food.id) && !avoid.has(food.id)
+  );
+  if (strict.length > 0) {
+    return strict.some((food) => food.id === foodId);
+  }
+
+  let relaxed = pool.filter((food) => !avoid.has(food.id));
+  if (relaxed.length === 0) relaxed = [...pool];
+  const minimum = Math.min(
+    ...relaxed.map((food) => context.usedCounts.get(food.id) ?? 0)
+  );
+  relaxed = relaxed.filter(
+    (food) => (context.usedCounts.get(food.id) ?? 0) === minimum
+  );
+  return relaxed.some((food) => food.id === foodId);
+}
+
+/** Preview a smart result without changing the meal plan. */
+export async function rollFoodForSlot(target: SpinTarget): Promise<{
+  error?: string;
+  result?: FoodSpinResultDTO;
+}> {
+  await requireSession();
+  if (!isSpinTarget(target)) return { error: "Vị trí món không hợp lệ" };
+
+  const context = await loadSpinContext(target);
+  if (!context) return { error: SPIN_STALE_MESSAGE };
+  if (!canRandomizeDay(context.dateISO)) {
+    return { error: RANDOM_DAY_BLOCKED_MESSAGE };
+  }
+  if (
+    target.expectedFoodId !== undefined &&
+    target.expectedFoodId !== (context.item?.foodId ?? null)
+  ) {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  const pool = (await loadCandidates()).filter(
+    (food) => food.type === target.position
+  );
+  if (pool.length === 0) {
+    return {
+      error: `Chưa có ${target.position === "MAIN" ? "món chính" : "món phụ"} nào phù hợp — thêm món ở tab Món ăn nhé`,
+    };
+  }
+
+  const avoid = new Set(context.sameDay);
+  if (context.item) avoid.add(context.item.foodId);
+  const selected = pickFood(pool, {
+    usedIds: context.used,
+    avoidIds: avoid,
+    usedCounts: context.usedCounts,
+    now: new Date(),
+  });
+  if (!selected) return { error: "Không còn món phù hợp để mở hòm" };
+
+  return {
+    result: {
+      selected: toSpinFood(selected),
+      reel: buildFoodChestReel(pool, selected).map(toSpinFood),
+      label: foodChestLabel(selected.favoriteScore),
+    },
+  };
+}
+
+/** Commit a previously previewed result after re-checking the slot and policy. */
+export async function commitFoodRoll(
+  target: SpinTarget,
+  foodId: string
+): Promise<PlanActionResult> {
+  await requireSession();
+  if (!isSpinTarget(target) || typeof foodId !== "string" || !foodId) {
+    return { error: "Dữ liệu mở hòm không hợp lệ" };
+  }
+
+  const context = await loadSpinContext(target);
+  if (!context) return { error: SPIN_STALE_MESSAGE };
+  if (!canRandomizeDay(context.dateISO)) {
+    return { error: RANDOM_DAY_BLOCKED_MESSAGE };
+  }
+  if (
+    target.expectedFoodId !== undefined &&
+    target.expectedFoodId !== (context.item?.foodId ?? null)
+  ) {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  const pool = (await loadCandidates()).filter(
+    (food) => food.type === target.position
+  );
+  const selected = pool.find((food) => food.id === foodId);
+  if (!selected || !spinCandidateIsAllowed(foodId, pool, context)) {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  try {
+    if (context.item) {
+      const where = {
+        id: context.item.id,
+        mealId: target.mealId,
+        position: target.position,
+        ...(target.expectedFoodId ? { foodId: target.expectedFoodId } : {}),
+      };
+      const updated = await prisma.mealItem.updateMany({
+        where,
+        data: { foodId },
+      });
+      if (updated.count !== 1) return { error: SPIN_STALE_MESSAGE };
+    } else {
+      await prisma.mealItem.create({
+        data: {
+          mealId: target.mealId,
+          foodId,
+          position: target.position,
+        },
+      });
+    }
+  } catch {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  revalidatePath("/", "layout");
+  return {};
 }
 
 /** Remove the side dish from a meal — every meal must keep its main dish. */

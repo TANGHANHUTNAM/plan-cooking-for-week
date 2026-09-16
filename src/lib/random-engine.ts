@@ -8,6 +8,7 @@ export interface CandidateFood {
   id: string;
   name: string;
   type: FoodPosition;
+  cookingMethod?: string;
   favoriteScore: number; // 0..5
   totalCooked: number;
   lastCookedAt: Date | null;

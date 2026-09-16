@@ -15,6 +15,12 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-chest-bg: var(--chest-bg);
+  --color-chest-surface: var(--chest-surface);
+  --color-chest-gold: var(--chest-gold);
+  --color-chest-cream: var(--chest-cream);
+  --color-chest-muted: var(--chest-muted);
+  --color-chest-border: var(--chest-border);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -109,6 +115,12 @@
   --viz-heat-4: #419363;
   --viz-heat-5: #036d3d;
   --radius: 0.75rem;
+  --chest-bg: #0d0a07;
+  --chest-surface: #18120b;
+  --chest-gold: #d2a047;
+  --chest-cream: #f4e4b7;
+  --chest-muted: #b6a47a;
+  --chest-border: #765722;
   /* Keep the sidebar just below the canvas so cards and active navigation stay distinct. */
   --sidebar: oklch(0.965 0.006 250);
   --sidebar-foreground: oklch(0.22 0.018 250);
@@ -168,6 +180,428 @@
   --sidebar-accent-foreground: oklch(0.83 0.06 155);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.68 0.105 155);
+}
+
+/* Food chest: a fixed stage, compositor transforms and a separate reveal layer. */
+.food-chest-shell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--chest-cream);
+}
+.food-chest-icon-button {
+  width: 44px;
+  height: 44px;
+  color: var(--chest-muted);
+}
+.food-chest-icon-button:hover {
+  background: #d2a04715;
+  color: var(--chest-cream);
+}
+.food-chest-dialog [data-slot="dialog-close"] {
+  width: 44px;
+  height: 44px;
+  color: var(--chest-muted);
+}
+.food-chest-shell button:focus-visible {
+  outline: 2px solid var(--chest-gold);
+  outline-offset: 3px;
+}
+.food-chest-stage {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 470px;
+  border: 1px solid var(--chest-border);
+  background:
+    radial-gradient(ellipse at 50% 0%, #64421d30, transparent 65%), #100e0a;
+}
+.food-chest-stage-backdrop {
+  padding: 14px 0 20px;
+  opacity: 1;
+  transition:
+    opacity 350ms ease,
+    filter 350ms ease;
+}
+.food-chest-stage[data-state="result"] .food-chest-stage-backdrop,
+.food-chest-stage[data-state="saving"] .food-chest-stage-backdrop {
+  opacity: 0.2;
+  filter: blur(3px);
+}
+.food-chest-reel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 14px 12px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--chest-muted);
+}
+.food-chest-reel-heading span:first-child {
+  color: var(--chest-gold);
+}
+.food-chest-reel-viewport {
+  position: relative;
+  overflow: hidden;
+  height: 204px;
+  border-block: 1px solid #765722a0;
+  background: #090907;
+  contain: layout paint;
+}
+.food-chest-reel-viewport::before,
+.food-chest-reel-viewport::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  z-index: 2;
+  width: 12%;
+  pointer-events: none;
+}
+.food-chest-reel-viewport::before {
+  left: 0;
+  background: linear-gradient(90deg, #090907, transparent);
+}
+.food-chest-reel-viewport::after {
+  right: 0;
+  background: linear-gradient(270deg, #090907, transparent);
+}
+.food-chest-marker {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: #f7da90;
+  box-shadow: 0 0 8px #e9bd6390;
+}
+.food-chest-marker span {
+  position: absolute;
+  left: -4px;
+  width: 10px;
+  height: 8px;
+  background: #f7da90;
+}
+.food-chest-marker span:first-child {
+  top: 0;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.food-chest-marker span:last-child {
+  bottom: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.food-chest-track {
+  position: relative;
+  left: 50%;
+  display: flex;
+  width: max-content;
+  gap: 8px;
+  padding-block: 12px;
+}
+.food-chest-reel-viewport[data-spinning="true"] .food-chest-track {
+  will-change: transform;
+}
+.food-chest-reel-card {
+  position: relative;
+  display: flex;
+  flex: 0 0 164px;
+  width: 164px;
+  height: 178px;
+  flex-direction: column;
+  border: 1px solid color-mix(in srgb, var(--dish-accent) 45%, #1a1916);
+  border-bottom: 3px solid var(--dish-accent);
+  background: linear-gradient(145deg, #32332d, #161814 65%);
+  contain: layout paint;
+}
+.food-chest-reel-card[data-winner="true"] {
+  box-shadow:
+    inset 0 0 0 1px var(--chest-gold),
+    inset 0 0 32px #d2a04722;
+}
+.food-chest-card-label {
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  z-index: 1;
+  color: var(--dish-accent);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.food-chest-dish {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  place-items: center;
+  padding: 16px 8px 6px;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--dish-accent) 14%, transparent),
+    transparent 68%
+  );
+}
+.food-chest-dish-plate {
+  display: grid;
+  width: 86px;
+  height: 76px;
+  place-items: center;
+  border: 3px solid #e5e0c68c;
+  border-radius: 50%;
+  transform: rotate(-12deg);
+  background: radial-gradient(
+    ellipse,
+    #42462d 48%,
+    #a49d75 50%,
+    #d5cfad 60%,
+    #857c55 62%,
+    #c7c2a2 67%,
+    #27251d 70%
+  );
+  box-shadow: 6px 12px 12px #0008;
+  color: #f6e5ab;
+}
+.food-chest-dish-plate svg {
+  width: 42px;
+  height: 42px;
+  transform: rotate(12deg);
+}
+.food-chest-card-caption {
+  min-height: 52px;
+  padding: 5px 8px 7px;
+  background: #060705a8;
+  border-top: 1px solid #ffffff0c;
+}
+.food-chest-card-caption p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+.food-chest-card-caption span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--chest-muted);
+  font-size: 9px;
+  margin-top: 2px;
+}
+.food-chest-console {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px 0;
+  text-align: center;
+}
+.food-chest-status {
+  min-height: 54px;
+}
+.food-chest-status h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  color: var(--chest-cream);
+}
+.food-chest-status p {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--chest-muted);
+}
+.food-chest-labels {
+  display: flex;
+  gap: 20px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.food-chest-labels span::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 7px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+.food-chest-labels span:nth-child(1) {
+  color: #b1a3d9;
+}
+.food-chest-labels span:nth-child(2) {
+  color: #8ed1ba;
+}
+.food-chest-labels span:nth-child(3) {
+  color: #dfb65d;
+}
+.food-chest-cta {
+  border: 1px solid #dcc185;
+  background: linear-gradient(#cfb16c, #937135);
+  color: #fff4d7;
+  box-shadow:
+    inset 0 1px 0 #ffefd13d,
+    0 2px 8px #0005;
+  text-shadow: 0 1px 2px #432d13;
+}
+.food-chest-cta:hover:not(:disabled) {
+  background: linear-gradient(#e0c581, #a8823d);
+}
+.food-chest-cta:disabled {
+  opacity: 0.5;
+}
+.food-chest-secondary,
+.dark .food-chest-secondary {
+  border-color: #765722;
+  background: #1c1911;
+  color: var(--chest-cream);
+}
+.food-chest-secondary:hover:not(:disabled),
+.dark .food-chest-secondary:hover:not(:disabled) {
+  background: #322818;
+  color: var(--chest-cream);
+}
+.food-chest-result-overlay {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #06050370;
+  animation: food-chest-veil 300ms ease-out both;
+}
+.food-chest-result {
+  display: flex;
+  width: min(100%, 380px);
+  max-height: 100%;
+  overflow-y: auto;
+  align-items: center;
+  flex-direction: column;
+  padding: 24px 18px 18px;
+  border: 1px solid #99763d;
+  background:
+    radial-gradient(ellipse at 50% 40%, #55401b25, transparent 70%), #17160f;
+  box-shadow:
+    0 16px 60px #000b,
+    inset 0 0 0 4px #100f0a,
+    inset 0 0 0 5px #76572240;
+  text-align: center;
+  animation: food-chest-result-enter 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.food-chest-result-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dish-accent);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.food-chest-result-title {
+  margin: 12px 0 6px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--chest-cream);
+}
+.food-chest-result-title:focus-visible {
+  outline: 1px solid var(--chest-gold);
+  outline-offset: 4px;
+}
+.food-chest-result .food-chest-dish {
+  flex: none;
+  width: 100%;
+  height: 180px;
+  margin-block: 8px;
+  padding: 12px;
+}
+.food-chest-result .food-chest-dish-plate {
+  width: 154px;
+  height: 130px;
+}
+.food-chest-result .food-chest-dish-plate svg {
+  width: 72px;
+  height: 72px;
+}
+.food-chest-stage[data-state="settling"] .food-chest-reel-viewport::after {
+  width: 100%;
+  background: radial-gradient(ellipse, #ffe6aa70, transparent 70%);
+  animation: food-chest-flash 420ms ease-out both;
+}
+@keyframes food-chest-veil {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes food-chest-result-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes food-chest-flash {
+  from {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (max-width: 639px) {
+  .food-chest-stage {
+    min-height: 460px;
+  }
+  .food-chest-reel-viewport {
+    height: 184px;
+  }
+  .food-chest-reel-card {
+    flex-basis: 140px;
+    width: 140px;
+    height: 158px;
+  }
+  .food-chest-dish-plate {
+    width: 76px;
+    height: 66px;
+  }
+  .food-chest-result {
+    padding: 20px 14px 16px;
+  }
+  .food-chest-result-title {
+    font-size: 23px;
+  }
+  .food-chest-result .food-chest-dish {
+    height: 160px;
+  }
+  .food-chest-reel-heading {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (max-width: 479px) {
+  .food-chest-result-actions {
+    grid-template-columns: 1fr;
+  }
+  .food-chest-result .food-chest-dish {
+    height: 132px;
+  }
+  .food-chest-result .food-chest-dish-plate {
+    width: 130px;
+    height: 110px;
+  }
 }
 
 /* Dark mode is toggled by next-themes via the .dark class on <html>

@@ -5,6 +5,9 @@ const mocks = vi.hoisted(() => ({
   foodFindMany: vi.fn(),
   mealCount: vi.fn(),
   mealFindMany: vi.fn(),
+  mealFindUnique: vi.fn(),
+  mealItemUpdateMany: vi.fn(),
+  mealItemCreate: vi.fn(),
   transaction: vi.fn(),
   snapshotFindMany: vi.fn(),
   txExecuteRaw: vi.fn(),
@@ -19,7 +22,15 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     food: { findMany: mocks.foodFindMany },
-    meal: { count: mocks.mealCount, findMany: mocks.mealFindMany },
+    meal: {
+      count: mocks.mealCount,
+      findMany: mocks.mealFindMany,
+      findUnique: mocks.mealFindUnique,
+    },
+    mealItem: {
+      updateMany: mocks.mealItemUpdateMany,
+      create: mocks.mealItemCreate,
+    },
     planSnapshot: { findMany: mocks.snapshotFindMany },
     $transaction: mocks.transaction,
   },
@@ -33,7 +44,12 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-import { generateWeek, loadSwapFoods } from "../plans";
+import {
+  commitFoodRoll,
+  generateWeek,
+  loadSwapFoods,
+  rollFoodForSlot,
+} from "../plans";
 
 describe("loadSwapFoods", () => {
   beforeEach(() => {
@@ -213,5 +229,178 @@ describe("generateWeek week guard", () => {
     expect(mocks.txMealCount.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.txMealDeleteMany.mock.invocationCallOrder[0]
     );
+  });
+});
+
+function futureSpinMeal(
+  items: { id: string; foodId: string; position: "MAIN" | "SIDE" }[] = []
+) {
+  const current = {
+    id: "meal-target",
+    date: new Date("2026-03-12T00:00:00.000Z"),
+    items,
+  };
+  return {
+    ...current,
+    mealPlan: {
+      meals: [
+        current,
+        {
+          id: "meal-other",
+          date: new Date("2026-03-13T00:00:00.000Z"),
+          items: [],
+        },
+      ],
+    },
+  };
+}
+
+function candidate(id: string, type: "MAIN" | "SIDE", favoriteScore = 0) {
+  return {
+    id,
+    name: id,
+    type,
+    cookingMethod: type === "MAIN" ? "Kho" : "Canh",
+    favoriteScore,
+    statistic: { totalCooked: 0, lastCookedAt: null },
+  };
+}
+
+describe("food chest actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    mocks.getSession.mockResolvedValue({
+      sub: "self",
+      email: "self@example.com",
+      name: "Self",
+      iat: 1,
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("previews a smart result without writing the meal", async () => {
+    mocks.mealFindUnique.mockResolvedValue(
+      futureSpinMeal([
+        { id: "item-current", foodId: "main-current", position: "MAIN" },
+      ])
+    );
+    mocks.foodFindMany.mockResolvedValue([candidate("main-new", "MAIN", 5)]);
+
+    const result = await rollFoodForSlot({
+      mealId: "meal-target",
+      position: "MAIN",
+      itemId: "item-current",
+      expectedFoodId: "main-current",
+    });
+
+    expect(result.result?.selected.id).toBe("main-new");
+    expect(result.result?.reel).toHaveLength(7);
+    expect(result.result?.label).toBe("Món tủ");
+    expect(mocks.mealItemUpdateMany).not.toHaveBeenCalled();
+    expect(mocks.mealItemCreate).not.toHaveBeenCalled();
+  });
+
+  it("blocks a roll for today before loading candidates", async () => {
+    const today = futureSpinMeal();
+    today.date = new Date("2026-03-11T00:00:00.000Z");
+    today.mealPlan.meals[0] = today;
+    mocks.mealFindUnique.mockResolvedValue(today);
+
+    await expect(
+      rollFoodForSlot({
+        mealId: "meal-target",
+        position: "MAIN",
+        itemId: null,
+      })
+    ).resolves.toEqual({ error: "Chỉ random được món từ ngày mai trở đi" });
+    expect(mocks.foodFindMany).not.toHaveBeenCalled();
+  });
+
+  it("re-checks the slot and updates the selected item on commit", async () => {
+    mocks.mealFindUnique.mockResolvedValue(
+      futureSpinMeal([
+        { id: "item-current", foodId: "main-current", position: "MAIN" },
+      ])
+    );
+    mocks.foodFindMany.mockResolvedValue([candidate("main-new", "MAIN")]);
+    mocks.mealItemUpdateMany.mockResolvedValue({ count: 1 });
+
+    await expect(
+      commitFoodRoll(
+        {
+          mealId: "meal-target",
+          position: "MAIN",
+          itemId: "item-current",
+          expectedFoodId: "main-current",
+        },
+        "main-new"
+      )
+    ).resolves.toEqual({});
+    expect(mocks.mealItemUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "item-current",
+        mealId: "meal-target",
+        position: "MAIN",
+        foodId: "main-current",
+      },
+      data: { foodId: "main-new" },
+    });
+  });
+
+  it("rejects a stale result when another tab changed the slot", async () => {
+    mocks.mealFindUnique.mockResolvedValue(
+      futureSpinMeal([
+        { id: "item-current", foodId: "main-other", position: "MAIN" },
+      ])
+    );
+
+    await expect(
+      commitFoodRoll(
+        {
+          mealId: "meal-target",
+          position: "MAIN",
+          itemId: "item-current",
+          expectedFoodId: "main-current",
+        },
+        "main-new"
+      )
+    ).resolves.toEqual({
+      error: "Kết quả đã thay đổi — quay lại và mở hòm lại nhé",
+    });
+    expect(mocks.mealItemUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it("creates a dish when the targeted position was empty", async () => {
+    mocks.mealFindUnique.mockResolvedValue(
+      futureSpinMeal([
+        { id: "item-main", foodId: "main-current", position: "MAIN" },
+      ])
+    );
+    mocks.foodFindMany.mockResolvedValue([candidate("side-new", "SIDE")]);
+    mocks.mealItemCreate.mockResolvedValue({ id: "item-side" });
+
+    await expect(
+      commitFoodRoll(
+        {
+          mealId: "meal-target",
+          position: "SIDE",
+          itemId: null,
+          expectedFoodId: null,
+        },
+        "side-new"
+      )
+    ).resolves.toEqual({});
+    expect(mocks.mealItemCreate).toHaveBeenCalledWith({
+      data: {
+        mealId: "meal-target",
+        foodId: "side-new",
+        position: "SIDE",
+      },
+    });
   });
 });
