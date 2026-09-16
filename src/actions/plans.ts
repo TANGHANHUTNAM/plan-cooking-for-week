@@ -15,6 +15,7 @@ import {
 } from "@/lib/plan-history";
 import { getSession, type SessionPayload } from "@/lib/session";
 import {
+  foodMethodKey,
   generateWeekAssignments,
   pickFood,
   suggestFoods,
@@ -588,6 +589,7 @@ export async function swapItemRandom(
   const picked = pickFood(pool, {
     usedIds: ctx.used,
     avoidIds: avoid,
+    usedMethodCounts: countUsedMethods(pool, ctx.used),
     now: new Date(),
   });
   if (!picked) {
@@ -842,6 +844,7 @@ export async function rollFoodForSlot(target: SpinTarget): Promise<{
     usedIds: context.used,
     avoidIds: avoid,
     usedCounts: context.usedCounts,
+    usedMethodCounts: countUsedMethods(pool, context.used),
     now: new Date(),
   });
   if (!selected) return { error: "Không còn món phù hợp để mở hòm" };
@@ -939,6 +942,19 @@ function isMealItemPosition(value: unknown): value is MealItemPosition {
   return value === "MAIN" || value === "SIDE";
 }
 
+function countUsedMethods(
+  pool: CandidateFood[],
+  usedIds: ReadonlySet<string>
+): ReadonlyMap<string, number> {
+  const counts = new Map<string, number>();
+  for (const food of pool) {
+    if (!usedIds.has(food.id)) continue;
+    const key = foodMethodKey(food);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
 function mealItemPositionLabel(position: MealItemPosition): string {
   return position === "MAIN" ? "món chính" : "món phụ";
 }
@@ -977,6 +993,7 @@ export async function addMealItem(
     const picked = pickFood(pool, {
       usedIds: ctx.used,
       avoidIds: ctx.sameDay,
+      usedMethodCounts: countUsedMethods(pool, ctx.used),
       now: new Date(),
     });
     if (!picked) {

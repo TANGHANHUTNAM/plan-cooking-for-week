@@ -51,7 +51,7 @@ Authentication is a compact custom flow in `src/actions/auth.ts` and `src/lib/se
 
 ## Meal planning behavior
 
-`src/lib/random-engine.ts` is pure and unit-testable. It scores favorite rating (2.0), logarithmic cooked frequency (1.5), staleness capped at 30 days (1.5), and a random factor (1.0), then chooses with weighted randomness from the top five. Main and side pools are separate. Week generation avoids repeats while pools allow, avoids same-day repeats when relaxing an exhausted pool, and uses repeat counts to distribute constrained pools. An empty side pool produces main-only assignments.
+`src/lib/random-engine.ts` is pure and unit-testable. It scores favorite rating (2.0), logarithmic cooked frequency (1.5), staleness capped at 30 days (1.5), and a random factor (1.0). Selection samples a broad 65% score window with softened weights, and gives a temporary bonus to cooking methods that appeared less often in the current week. Main and side pools are separate. Week generation avoids repeats while pools allow, avoids same-day repeats when relaxing an exhausted pool, and uses repeat counts to distribute constrained pools. An empty side pool produces main-only assignments.
 
 `generateWeek` and `copyLastWeek` replace a target week’s meals inside a transaction. Copying shifts the previous week’s items by seven days and creates fresh meals, so cooked state, attendance rows, and meal notes are not carried over. Individual swaps validate the food type; side removal/addition is handled by dedicated actions.
 

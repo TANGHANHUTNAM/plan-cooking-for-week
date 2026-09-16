@@ -8,16 +8,16 @@ export type FoodChestCue = "click" | "tick" | "open" | "reward";
 const SOUND_PREFERENCE_KEY = "pf:food-chest:sound-enabled";
 const SOUND_PREFERENCE_EVENT = "pf-food-chest-sound-change";
 const SOUND_SOURCES: Record<FoodChestCue, string> = {
-  click: "/sounds/new-sounds/ui-press.mp3",
-  tick: "/sounds/new-sounds/tick.wav",
-  open: "/sounds/new-sounds/opening.wav",
-  reward: "/sounds/new-sounds/reveal.wav",
+  click: "/sounds/ui-press.mp3",
+  tick: "/sounds/tick.wav",
+  open: "/sounds/opening.wav",
+  reward: "/sounds/reveal.wav",
 };
 
 const REWARD_SOURCES: Record<FoodChestLabel, string> = {
-  "Món tủ": "/sounds/new-sounds/reveal-mythical.wav",
-  "Hợp gu": "/sounds/new-sounds/reveal-legendary.wav",
-  "Đổi vị": "/sounds/new-sounds/reveal-ancient.wav",
+  "Món tủ": "/sounds/reveal-mythical.wav",
+  "Hợp gu": "/sounds/reveal-legendary.wav",
+  "Đổi vị": "/sounds/reveal-ancient.wav",
 };
 
 const SOUND_VOLUMES: Record<FoodChestCue, number> = {
