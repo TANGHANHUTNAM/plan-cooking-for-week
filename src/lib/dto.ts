@@ -34,6 +34,33 @@ export interface SwapFoodDTO {
   totalCooked: number;
 }
 
+export type FoodChestLabel = "Món tủ" | "Hợp gu" | "Đổi vị";
+
+/** Serializable target for a preview-only food-chest roll. */
+export interface SpinTarget {
+  mealId: string;
+  position: "MAIN" | "SIDE";
+  itemId: string | null;
+  /** Used to reject a result when the current item changed in another tab. */
+  expectedFoodId?: string | null;
+  /** Ephemeral IDs previewed earlier in this chest session; never persisted. */
+  avoidFoodIds?: string[];
+}
+
+export interface SpinFoodDTO {
+  id: string;
+  name: string;
+  cookingMethod: string;
+  favoriteScore: number;
+  totalCooked: number;
+}
+
+export interface FoodSpinResultDTO {
+  selected: SpinFoodDTO;
+  reel: SpinFoodDTO[];
+  label: FoodChestLabel;
+}
+
 export interface MealFoodDTO {
   id: string;
   name: string;

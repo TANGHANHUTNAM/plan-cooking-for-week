@@ -2,6 +2,7 @@
 
 import { useRef, type ReactNode } from "react";
 import { useIsDesktop } from "@/lib/use-is-desktop";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,7 @@ export function ResponsiveSheet({
   icon,
   title,
   description,
+  tone = "default",
   children,
 }: {
   open: boolean;
@@ -57,28 +59,53 @@ export function ResponsiveSheet({
   icon?: ReactNode;
   title: string;
   description?: ReactNode;
+  tone?: "default" | "chest";
   children: ReactNode;
 }) {
   const isDesktop = useIsDesktop();
+  const isChest = tone === "chest";
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="flex max-h-[86dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl"
+          className={cn(
+            "flex max-h-[86dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl",
+            isChest &&
+              "food-chest-dialog border-chest-border bg-chest-bg text-chest-cream ring-chest-border/60 sm:max-w-4xl"
+          )}
           {...(description ? {} : { "aria-describedby": undefined })}
         >
-          <DialogHeader className="shrink-0 border-b border-border px-6 py-4 text-left">
-            <DialogTitle className="flex items-center gap-2 text-base">
+          <DialogHeader
+            className={cn(
+              "shrink-0 border-b border-border px-6 py-4 text-left",
+              isChest && "border-chest-border/70 bg-chest-bg"
+            )}
+          >
+            <DialogTitle
+              className={cn(
+                "flex items-center gap-2 text-base",
+                isChest && "font-serif text-chest-cream"
+              )}
+            >
               {icon}
               {title}
             </DialogTitle>
             {description ? (
-              <DialogDescription>{description}</DialogDescription>
+              <DialogDescription
+                className={isChest ? "text-chest-muted" : undefined}
+              >
+                {description}
+              </DialogDescription>
             ) : null}
           </DialogHeader>
-          <div className="scrollbar-thin overflow-y-auto px-6 py-5">
+          <div
+            className={cn(
+              "scrollbar-thin overflow-y-auto px-6 py-5",
+              isChest && "bg-chest-bg px-4 sm:px-6"
+            )}
+          >
             {children}
           </div>
         </DialogContent>
@@ -89,7 +116,10 @@ export function ResponsiveSheet({
   return (
     <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <DrawerContent
-        className="max-h-[94dvh]"
+        className={cn(
+          "max-h-[94dvh]",
+          isChest && "before:border-chest-border before:bg-chest-bg"
+        )}
         onOpenAutoFocus={(event) => {
           const content = event.currentTarget;
           if (!(content instanceof HTMLElement)) return;
@@ -125,15 +155,24 @@ export function ResponsiveSheet({
       >
         <div className="scrollbar-thin mx-auto w-full max-w-md overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <DrawerHeader className="px-0 pt-1 pb-4 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
-            <DrawerTitle className="flex items-center gap-2 text-base">
+            <DrawerTitle
+              className={cn(
+                "flex items-center gap-2 text-base",
+                isChest && "font-serif text-chest-cream"
+              )}
+            >
               {icon}
               {title}
             </DrawerTitle>
             {description ? (
-              <DrawerDescription>{description}</DrawerDescription>
+              <DrawerDescription
+                className={isChest ? "text-chest-muted" : undefined}
+              >
+                {description}
+              </DrawerDescription>
             ) : null}
           </DrawerHeader>
-          {children}
+          <div className={cn(isChest && "text-chest-cream")}>{children}</div>
         </div>
       </DrawerContent>
     </Drawer>

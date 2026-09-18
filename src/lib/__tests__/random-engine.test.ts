@@ -81,6 +81,17 @@ describe("pickFood", () => {
     }
   });
 
+  it("không lặp món đã quay trước đó khi vẫn còn lựa chọn khác", () => {
+    const foods = pool(4, "MAIN");
+    const picked = pickFood(foods, {
+      usedIds: new Set(),
+      avoidIds: new Set(["MAIN-0", "MAIN-1"]),
+      now: NOW,
+      rng: () => 0.5,
+    });
+    expect(["MAIN-2", "MAIN-3"]).toContain(picked?.id);
+  });
+
   it("pool cạn thì nới lỏng thay vì trả null", () => {
     const foods = pool(2, "MAIN");
     const used = new Set(["MAIN-0", "MAIN-1"]);
@@ -90,6 +101,52 @@ describe("pickFood", () => {
 
   it("pool rỗng trả null", () => {
     expect(pickFood([], { usedIds: new Set(), now: NOW })).toBeNull();
+  });
+
+  it("mở rộng vùng random để một món ngoài top 5 vẫn có cơ hội được chọn", () => {
+    const foods = [
+      ...Array.from({ length: 6 }, (_, i) =>
+        food({ id: `favorite-${i}`, favoriteScore: 5 })
+      ),
+      ...Array.from({ length: 4 }, (_, i) => food({ id: `explore-${i}` })),
+    ];
+    let calls = 0;
+    const picked = pickFood(foods, {
+      usedIds: new Set(),
+      now: NOW,
+      rng: () => (calls++ < foods.length ? 0 : 0.999),
+    });
+    expect(picked?.id.startsWith("explore-")).toBe(true);
+  });
+
+  it("ưu tiên cách chế biến chưa xuất hiện nhiều trong tuần", () => {
+    const foods = [
+      food({ id: "used-method", cookingMethod: "Xào", favoriteScore: 5 }),
+      food({ id: "new-method", cookingMethod: "Nướng", favoriteScore: 4 }),
+    ];
+    const picked = pickFood(foods, {
+      usedIds: new Set(),
+      usedMethodCounts: new Map([["MAIN:xào", 5]]),
+      now: NOW,
+      rng: () => 0,
+    });
+    expect(picked?.id).toBe("new-method");
+  });
+
+  it("mở hòm chọn đều toàn bộ pool, không phụ thuộc điểm món", () => {
+    const foods = [
+      food({ id: "favorite", favoriteScore: 5 }),
+      ...Array.from({ length: 4 }, (_, index) =>
+        food({ id: `explore-${index}` })
+      ),
+    ];
+    const picked = pickFood(foods, {
+      usedIds: new Set(),
+      now: NOW,
+      selectionMode: "uniform",
+      rng: () => 0.99,
+    });
+    expect(picked?.id).toBe("explore-3");
   });
 });
 

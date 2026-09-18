@@ -1,6 +1,7 @@
 // "Smart" food selector — pure, database-free, and testable.
-// Score = 2.0*favorites + 1.5*frequency (log) + 1.5*staleness + 1.0*randomness,
-// then weighted-random within the top 5 so each result varies while staying sensible.
+// Score = 2.0*favorites + 1.5*frequency (log) + 1.5*staleness + 1.0*randomness.
+// Selection uses a broad score window and soft weights so strong candidates lead without
+// making every roll converge on the same few dishes.
 
 export type FoodPosition = "MAIN" | "SIDE";
 
@@ -8,6 +9,7 @@ export interface CandidateFood {
   id: string;
   name: string;
   type: FoodPosition;
+  cookingMethod?: string;
   favoriteScore: number; // 0..5
   totalCooked: number;
   lastCookedAt: Date | null;
@@ -20,6 +22,10 @@ export interface PickContext {
   avoidIds?: ReadonlySet<string>;
   /** Number of times each food appeared this week — when relaxing constraints, prefer least-repeated foods. */
   usedCounts?: ReadonlyMap<string, number>;
+  /** Number of times each cooking method appeared for this food type in the week. */
+  usedMethodCounts?: ReadonlyMap<string, number>;
+  /** Use uniform random selection instead of favorite/cooked-time weighted selection. */
+  selectionMode?: "weighted" | "uniform";
   now: Date;
   /** For tests: replace Math.random. */
   rng?: () => number;
@@ -31,8 +37,17 @@ const W_STALENESS = 1.5;
 const W_RANDOM = 1.0;
 const STALE_CAP_DAYS = 30;
 const TOP_N = 5;
+const DIVERSITY_WINDOW_RATIO = 0.65;
+const MIN_SELECTION_WEIGHT = 0.25;
+const METHOD_DIVERSITY_BONUS = 0.9;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function foodMethodKey(
+  food: Pick<CandidateFood, "type" | "cookingMethod">
+): string {
+  return `${food.type}:${food.cookingMethod?.trim().toLocaleLowerCase("vi-VN") || "khác"}`;
+}
 
 export function scoreFood(
   food: CandidateFood,
@@ -80,10 +95,19 @@ export function suggestFoods(
     .map((x) => x.f);
 }
 
+function diversityBonus(
+  food: CandidateFood,
+  methodCounts: ReadonlyMap<string, number> | undefined
+): number {
+  if (!methodCounts) return 0;
+  const appearances = methodCounts.get(foodMethodKey(food)) ?? 0;
+  return METHOD_DIVERSITY_BONUS / (appearances + 1);
+}
+
 /**
- * Choose one food: score the whole pool (excluding foods already used this week), take the top 5,
- * then weighted-random by score within that group.
- * If the pool is exhausted (all foods already used), relax the rule and prefer least-repeated foods.
+ * Choose one food: optionally sample uniformly, or score the whole pool (excluding foods already
+ * used this week), keep a broad diversity window, then weighted-random with softened score differences.
+ * If the pool is exhausted (all foods already used), relax the rule while preserving same-day exclusions.
  */
 export function pickFood(
   pool: CandidateFood[],
@@ -100,7 +124,7 @@ export function pickFood(
     // (same day) and prefer foods with the fewest repeats
     let relaxed = pool.filter((f) => !ctx.avoidIds?.has(f.id));
     if (relaxed.length === 0) relaxed = [...pool];
-    if (ctx.usedCounts) {
+    if (ctx.selectionMode !== "uniform" && ctx.usedCounts) {
       const counts = ctx.usedCounts;
       const min = Math.min(...relaxed.map((f) => counts.get(f.id) ?? 0));
       relaxed = relaxed.filter((f) => (counts.get(f.id) ?? 0) === min);
@@ -108,18 +132,43 @@ export function pickFood(
     candidates = relaxed;
   }
 
+  if (ctx.selectionMode === "uniform") {
+    const index = Math.min(
+      candidates.length - 1,
+      Math.floor(rng() * candidates.length)
+    );
+    return candidates[index];
+  }
+
   const maxCooked = Math.max(0, ...candidates.map((f) => f.totalCooked));
   const scored = candidates
-    .map((f) => ({ f, s: scoreFood(f, maxCooked, ctx.now, rng) }))
+    .map((f) => ({
+      f,
+      s:
+        scoreFood(f, maxCooked, ctx.now, rng) +
+        diversityBonus(f, ctx.usedMethodCounts),
+    }))
     .sort((a, b) => b.s - a.s)
-    .slice(0, TOP_N);
+    .slice(
+      0,
+      Math.min(
+        candidates.length,
+        Math.max(TOP_N, Math.ceil(candidates.length * DIVERSITY_WINDOW_RATIO))
+      )
+    );
 
-  const total = scored.reduce((sum, x) => sum + x.s, 0);
+  const minimum = Math.min(...scored.map((x) => x.s));
+  const weights = scored.map((x) =>
+    Math.sqrt(
+      Math.max(MIN_SELECTION_WEIGHT, x.s - minimum + MIN_SELECTION_WEIGHT)
+    )
+  );
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
   if (total <= 0) return scored[0].f;
 
   let roll = rng() * total;
-  for (const x of scored) {
-    roll -= x.s;
+  for (const [index, x] of scored.entries()) {
+    roll -= weights[index];
     if (roll <= 0) return x.f;
   }
   return scored[scored.length - 1].f;
@@ -145,12 +194,15 @@ export function generateWeekAssignments(
   if (mains.length === 0) return [];
   const used = new Set<string>();
   const counts = new Map<string, number>();
+  const methodCounts = new Map<string, number>();
   const out: WeekAssignment[] = [];
 
   const take = (food: CandidateFood, dayUsed: Set<string>) => {
     used.add(food.id);
     dayUsed.add(food.id);
     counts.set(food.id, (counts.get(food.id) ?? 0) + 1);
+    const methodKey = foodMethodKey(food);
+    methodCounts.set(methodKey, (methodCounts.get(methodKey) ?? 0) + 1);
   };
 
   for (let day = 0; day < 7; day++) {
@@ -160,6 +212,7 @@ export function generateWeekAssignments(
         usedIds: used,
         avoidIds: dayUsed,
         usedCounts: counts,
+        usedMethodCounts: methodCounts,
         now: opts.now,
         rng: opts.rng,
       };

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { SwapFoodDTO } from "@/lib/dto";
+import type { FoodSpinResultDTO, SpinTarget, SwapFoodDTO } from "@/lib/dto";
 import {
   groupSnapshotByDay,
   parsePlanSnapshotData,
@@ -15,11 +15,17 @@ import {
 } from "@/lib/plan-history";
 import { getSession, type SessionPayload } from "@/lib/session";
 import {
+  foodMethodKey,
   generateWeekAssignments,
   pickFood,
   suggestFoods,
   type CandidateFood,
 } from "@/lib/random-engine";
+import {
+  buildFoodChestReel,
+  foodChestLabel,
+  toSpinFood,
+} from "@/lib/food-chest";
 import {
   canRandomizeDay,
   canReplaceWholeWeek,
@@ -54,6 +60,7 @@ async function loadCandidates(): Promise<CandidateFood[]> {
       id: true,
       name: true,
       type: true,
+      cookingMethod: true,
       favoriteScore: true,
       statistic: { select: { totalCooked: true, lastCookedAt: true } },
     },
@@ -62,6 +69,7 @@ async function loadCandidates(): Promise<CandidateFood[]> {
     id: f.id,
     name: f.name,
     type: f.type,
+    cookingMethod: f.cookingMethod,
     favoriteScore: f.favoriteScore,
     totalCooked: f.statistic?.totalCooked ?? 0,
     lastCookedAt: f.statistic?.lastCookedAt ?? null,
@@ -581,6 +589,7 @@ export async function swapItemRandom(
   const picked = pickFood(pool, {
     usedIds: ctx.used,
     avoidIds: avoid,
+    usedMethodCounts: countUsedMethods(pool, ctx.used),
     now: new Date(),
   });
   if (!picked) {
@@ -709,6 +718,180 @@ async function loadSlotContext(mealId: string) {
   return { meal, used, sameDay, dateISO: mealDate };
 }
 
+const SPIN_STALE_MESSAGE = "Kết quả đã thay đổi — quay lại và mở hòm lại nhé";
+
+function isSpinTarget(value: unknown): value is SpinTarget {
+  if (!value || typeof value !== "object") return false;
+  const target = value as Partial<SpinTarget>;
+  return (
+    typeof target.mealId === "string" &&
+    target.mealId.length > 0 &&
+    (target.position === "MAIN" || target.position === "SIDE") &&
+    (target.itemId === null ||
+      (typeof target.itemId === "string" && target.itemId.length > 0)) &&
+    (target.expectedFoodId === undefined ||
+      target.expectedFoodId === null ||
+      (typeof target.expectedFoodId === "string" &&
+        target.expectedFoodId.length > 0)) &&
+    (target.avoidFoodIds === undefined ||
+      (Array.isArray(target.avoidFoodIds) &&
+        target.avoidFoodIds.length <= 100 &&
+        target.avoidFoodIds.every(
+          (foodId) => typeof foodId === "string" && foodId.length > 0
+        )))
+  );
+}
+
+/** Load one slot for stale-state validation; chest selection has no plan-based exclusions. */
+async function loadSpinContext(target: SpinTarget) {
+  const meal = await prisma.meal.findUnique({
+    where: { id: target.mealId },
+    include: { items: true },
+  });
+  if (!meal) return null;
+
+  const item = target.itemId
+    ? (meal.items.find((candidate) => candidate.id === target.itemId) ?? null)
+    : null;
+  const itemInPosition = meal.items.find(
+    (candidate) => candidate.position === target.position
+  );
+
+  // A null itemId means the UI opened an empty position. A non-null itemId must
+  // still point to the position that was originally opened.
+  if (target.itemId ? item?.position !== target.position : itemInPosition) {
+    return null;
+  }
+
+  const mealDate = dateToISO(meal.date);
+
+  return { item, dateISO: mealDate };
+}
+
+function spinCandidateIsAllowed(
+  foodId: string,
+  pool: CandidateFood[],
+  avoidFoodIds: readonly string[] | undefined
+): boolean {
+  return (
+    pool.some((food) => food.id === foodId) && !avoidFoodIds?.includes(foodId)
+  );
+}
+
+/** Preview a uniform random result without changing the meal plan. */
+export async function rollFoodForSlot(target: SpinTarget): Promise<{
+  error?: string;
+  result?: FoodSpinResultDTO;
+}> {
+  await requireSession();
+  if (!isSpinTarget(target)) return { error: "Vị trí món không hợp lệ" };
+
+  const context = await loadSpinContext(target);
+  if (!context) return { error: SPIN_STALE_MESSAGE };
+  if (!canRandomizeDay(context.dateISO)) {
+    return { error: RANDOM_DAY_BLOCKED_MESSAGE };
+  }
+  if (
+    target.expectedFoodId !== undefined &&
+    target.expectedFoodId !== (context.item?.foodId ?? null)
+  ) {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  const pool = (await loadCandidates()).filter(
+    (food) => food.type === target.position
+  );
+  if (pool.length === 0) {
+    return {
+      error: `Chưa có ${target.position === "MAIN" ? "món chính" : "món phụ"} nào phù hợp — thêm món ở tab Món ăn nhé`,
+    };
+  }
+
+  const rollPool = pool.filter(
+    (food) => !target.avoidFoodIds?.includes(food.id)
+  );
+  if (rollPool.length === 0) {
+    return {
+      error: "Bạn đã quay hết món trong hòm này — hãy đóng và mở lại nhé",
+    };
+  }
+
+  const selected = pickFood(rollPool, {
+    usedIds: new Set(),
+    selectionMode: "uniform",
+    now: new Date(),
+  });
+  if (!selected) return { error: "Không còn món phù hợp để mở hòm" };
+
+  return {
+    result: {
+      selected: toSpinFood(selected),
+      reel: buildFoodChestReel(rollPool, selected).map(toSpinFood),
+      label: foodChestLabel(selected.favoriteScore),
+    },
+  };
+}
+
+/** Commit a previously previewed result after re-checking the slot and policy. */
+export async function commitFoodRoll(
+  target: SpinTarget,
+  foodId: string
+): Promise<PlanActionResult> {
+  await requireSession();
+  if (!isSpinTarget(target) || typeof foodId !== "string" || !foodId) {
+    return { error: "Dữ liệu mở hòm không hợp lệ" };
+  }
+
+  const context = await loadSpinContext(target);
+  if (!context) return { error: SPIN_STALE_MESSAGE };
+  if (!canRandomizeDay(context.dateISO)) {
+    return { error: RANDOM_DAY_BLOCKED_MESSAGE };
+  }
+  if (
+    target.expectedFoodId !== undefined &&
+    target.expectedFoodId !== (context.item?.foodId ?? null)
+  ) {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  const pool = (await loadCandidates()).filter(
+    (food) => food.type === target.position
+  );
+  const selected = pool.find((food) => food.id === foodId);
+  if (!selected || !spinCandidateIsAllowed(foodId, pool, target.avoidFoodIds)) {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  try {
+    if (context.item) {
+      const where = {
+        id: context.item.id,
+        mealId: target.mealId,
+        position: target.position,
+        ...(target.expectedFoodId ? { foodId: target.expectedFoodId } : {}),
+      };
+      const updated = await prisma.mealItem.updateMany({
+        where,
+        data: { foodId },
+      });
+      if (updated.count !== 1) return { error: SPIN_STALE_MESSAGE };
+    } else {
+      await prisma.mealItem.create({
+        data: {
+          mealId: target.mealId,
+          foodId,
+          position: target.position,
+        },
+      });
+    }
+  } catch {
+    return { error: SPIN_STALE_MESSAGE };
+  }
+
+  revalidatePath("/", "layout");
+  return {};
+}
+
 /** Remove the side dish from a meal — every meal must keep its main dish. */
 export async function removeSideDish(
   mealItemId: string
@@ -731,6 +914,19 @@ type MealItemPosition = "MAIN" | "SIDE";
 
 function isMealItemPosition(value: unknown): value is MealItemPosition {
   return value === "MAIN" || value === "SIDE";
+}
+
+function countUsedMethods(
+  pool: CandidateFood[],
+  usedIds: ReadonlySet<string>
+): ReadonlyMap<string, number> {
+  const counts = new Map<string, number>();
+  for (const food of pool) {
+    if (!usedIds.has(food.id)) continue;
+    const key = foodMethodKey(food);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
 }
 
 function mealItemPositionLabel(position: MealItemPosition): string {
@@ -771,6 +967,7 @@ export async function addMealItem(
     const picked = pickFood(pool, {
       usedIds: ctx.used,
       avoidIds: ctx.sameDay,
+      usedMethodCounts: countUsedMethods(pool, ctx.used),
       now: new Date(),
     });
     if (!picked) {

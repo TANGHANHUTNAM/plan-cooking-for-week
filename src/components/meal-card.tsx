@@ -390,6 +390,7 @@ export function MealCard({
   const swapSheet = sheet ? (
     <LazySwapSheet
       mealId={meal.id}
+      period={meal.period}
       position={sheet.position}
       item={sheet.item}
       canRandomize={meal.canRandomize}
