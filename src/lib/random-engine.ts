@@ -24,6 +24,8 @@ export interface PickContext {
   usedCounts?: ReadonlyMap<string, number>;
   /** Number of times each cooking method appeared for this food type in the week. */
   usedMethodCounts?: ReadonlyMap<string, number>;
+  /** Use uniform random selection instead of favorite/cooked-time weighted selection. */
+  selectionMode?: "weighted" | "uniform";
   now: Date;
   /** For tests: replace Math.random. */
   rng?: () => number;
@@ -103,9 +105,9 @@ function diversityBonus(
 }
 
 /**
- * Choose one food: score the whole pool (excluding foods already used this week), keep a broad
- * diversity window, then weighted-random with softened score differences within that window.
- * If the pool is exhausted (all foods already used), relax the rule and prefer least-repeated foods.
+ * Choose one food: optionally sample uniformly, or score the whole pool (excluding foods already
+ * used this week), keep a broad diversity window, then weighted-random with softened score differences.
+ * If the pool is exhausted (all foods already used), relax the rule while preserving same-day exclusions.
  */
 export function pickFood(
   pool: CandidateFood[],
@@ -122,12 +124,20 @@ export function pickFood(
     // (same day) and prefer foods with the fewest repeats
     let relaxed = pool.filter((f) => !ctx.avoidIds?.has(f.id));
     if (relaxed.length === 0) relaxed = [...pool];
-    if (ctx.usedCounts) {
+    if (ctx.selectionMode !== "uniform" && ctx.usedCounts) {
       const counts = ctx.usedCounts;
       const min = Math.min(...relaxed.map((f) => counts.get(f.id) ?? 0));
       relaxed = relaxed.filter((f) => (counts.get(f.id) ?? 0) === min);
     }
     candidates = relaxed;
+  }
+
+  if (ctx.selectionMode === "uniform") {
+    const index = Math.min(
+      candidates.length - 1,
+      Math.floor(rng() * candidates.length)
+    );
+    return candidates[index];
   }
 
   const maxCooked = Math.max(0, ...candidates.map((f) => f.totalCooked));

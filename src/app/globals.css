@@ -439,6 +439,10 @@
   color: #dfb65d;
 }
 .food-chest-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  touch-action: none;
   border: 1px solid #dcc185;
   background: linear-gradient(#cfb16c, #937135);
   color: #fff4d7;
@@ -446,6 +450,66 @@
     inset 0 1px 0 #ffefd13d,
     0 2px 8px #0005;
   text-shadow: 0 1px 2px #432d13;
+}
+.food-chest-charge-fill {
+  position: absolute;
+  z-index: 0;
+  inset: 0 auto 0 0;
+  min-width: 0;
+  background:
+    linear-gradient(90deg, #f8e6a5, #e2a43e 72%, #fff4bf),
+    linear-gradient(#cfb16c, #937135);
+  box-shadow:
+    0 0 22px #ffe398aa,
+    inset -2px 0 0 #fff6c4;
+  transition: width 60ms linear;
+}
+.food-chest-charge-fill::after {
+  position: absolute;
+  content: "";
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    #fff9d966 50%,
+    transparent 80%
+  );
+  animation: food-chest-charge-sheen 900ms linear infinite;
+}
+.food-chest-cta-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.food-chest-cta[data-charging="true"] {
+  box-shadow:
+    inset 0 1px 0 #fff8d366,
+    0 0 18px #e9bd6380,
+    0 2px 8px #0005;
+}
+.food-chest-cta[data-full-charge="true"] {
+  border-color: #fff1ad;
+  background: linear-gradient(135deg, #f7d778, #b77b20 54%, #fff0a2);
+  box-shadow:
+    inset 0 1px 0 #fffde0,
+    0 0 12px #ffe08d,
+    0 0 34px #eabf5d99,
+    0 2px 8px #0007;
+  animation: food-chest-full-charge 460ms ease-in-out infinite alternate;
+}
+.food-chest-charge-badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 2;
+  color: #fff7c9;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 3px #51320b;
 }
 .food-chest-cta:hover:not(:disabled) {
   background: linear-gradient(#e0c581, #a8823d);
@@ -558,6 +622,33 @@
   }
   to {
     opacity: 0;
+  }
+}
+@keyframes food-chest-charge-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes food-chest-full-charge {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.018);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .food-chest-charge-fill {
+    transition: none;
+  }
+  .food-chest-charge-fill::after {
+    animation: none;
+  }
+  .food-chest-cta[data-full-charge="true"] {
+    animation: none;
   }
 }
 @media (max-width: 639px) {

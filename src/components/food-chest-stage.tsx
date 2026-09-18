@@ -9,12 +9,23 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import type { CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import { toast } from "sonner";
 import { commitFoodRoll, rollFoodForSlot } from "@/actions/plans";
 import type { FoodSpinResultDTO, SpinFoodDTO, SpinTarget } from "@/lib/dto";
-import { CHEST_SETTLE_MS } from "@/lib/food-chest-motion";
+import {
+  CHEST_SETTLE_MS,
+  CHEST_SPIN_MS,
+  chestSpinDuration,
+} from "@/lib/food-chest-motion";
 import { useFoodChestAudio } from "@/lib/use-food-chest-audio";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -23,6 +34,8 @@ import { chestAccent, FoodChestReel } from "@/components/food-chest-reel";
 
 type ChestStage =
   "ready" | "loading" | "rolling" | "settling" | "result" | "saving";
+
+const CHARGE_MAX_MS = 1600;
 
 export function FoodChestStage({
   target,
@@ -42,25 +55,41 @@ export function FoodChestStage({
   const [error, setError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("Hòm đang chờ được mở");
   const [pending, startTransition] = useTransition();
+  const [rolledFoodIds, setRolledFoodIds] = useState<string[]>([]);
+  const [charge, setCharge] = useState(0);
+  const [spinDuration, setSpinDuration] = useState(CHEST_SPIN_MS);
   const resultRef = useRef<HTMLHeadingElement>(null);
   const mountedRef = useRef(true);
   const requestRef = useRef(0);
+  const chargingRef = useRef(false);
+  const chargeRef = useRef(0);
+  const chargeStartedAtRef = useRef<number | null>(null);
+  const chargeFrameRef = useRef<number | null>(null);
   const { enabled, play, playReward, prepareReward, stopAll, toggle } =
     useFoodChestAudio();
   const showingResult = stage === "result" || stage === "saving";
   const spinning = stage === "rolling";
+  const chargePercent = Math.round(charge * 100);
+  const fullyCharged = charge >= 0.99;
   const busy =
     pending ||
     stage === "loading" ||
     spinning ||
     stage === "settling" ||
     stage === "saving";
+  const rollTarget = useMemo<SpinTarget>(
+    () => ({ ...target, avoidFoodIds: rolledFoodIds }),
+    [rolledFoodIds, target]
+  );
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       requestRef.current += 1;
+      if (chargeFrameRef.current !== null) {
+        cancelAnimationFrame(chargeFrameRef.current);
+      }
     };
   }, []);
 
@@ -85,9 +114,10 @@ export function FoodChestStage({
     if (showingResult) resultRef.current?.focus({ preventScroll: true });
   }, [showingResult]);
 
-  const startRoll = () => {
+  const startRoll = (chargePower = 0) => {
     if (busy) return;
     const request = ++requestRef.current;
+    setSpinDuration(chestSpinDuration(chargePower));
     stopAll();
     play("click");
     setStage("loading");
@@ -95,7 +125,7 @@ export function FoodChestStage({
     setAnnouncement("Đang chuẩn bị lượt quay");
     startTransition(async () => {
       try {
-        const response = await rollFoodForSlot(target);
+        const response = await rollFoodForSlot(rollTarget);
         if (!mountedRef.current || request !== requestRef.current) return;
         if (response.error || !response.result) {
           const message = response.error ?? "Không mở được hòm món";
@@ -105,6 +135,11 @@ export function FoodChestStage({
           return;
         }
         prepareReward(response.result.label);
+        setRolledFoodIds((previous) =>
+          previous.includes(response.result!.selected.id)
+            ? previous
+            : [...previous, response.result!.selected.id]
+        );
         stopAll();
         play("open");
         setResult(response.result);
@@ -118,6 +153,102 @@ export function FoodChestStage({
         setStage(result ? "result" : "ready");
       }
     });
+  };
+
+  const beginCharge = () => {
+    if (busy || chargingRef.current) return;
+    chargingRef.current = true;
+    chargeStartedAtRef.current = performance.now();
+    chargeRef.current = 0;
+    setCharge(0);
+    setAnnouncement("Đang tích lực — thả tay để khai mở");
+
+    const animateCharge = (now: number) => {
+      if (!chargingRef.current || chargeStartedAtRef.current === null) return;
+      const next = Math.min(
+        1,
+        (now - chargeStartedAtRef.current) / CHARGE_MAX_MS
+      );
+      chargeRef.current = next;
+      setCharge(next);
+      if (next < 1) {
+        chargeFrameRef.current = requestAnimationFrame(animateCharge);
+      } else {
+        chargeFrameRef.current = null;
+      }
+    };
+
+    chargeFrameRef.current = requestAnimationFrame(animateCharge);
+  };
+
+  const finishCharge = () => {
+    if (!chargingRef.current) return;
+    chargingRef.current = false;
+    if (chargeFrameRef.current !== null) {
+      cancelAnimationFrame(chargeFrameRef.current);
+      chargeFrameRef.current = null;
+    }
+    const power = chargeRef.current;
+    chargeStartedAtRef.current = null;
+    chargeRef.current = 0;
+    setCharge(0);
+    startRoll(power);
+  };
+
+  const cancelCharge = () => {
+    if (!chargingRef.current) return;
+    chargingRef.current = false;
+    if (chargeFrameRef.current !== null) {
+      cancelAnimationFrame(chargeFrameRef.current);
+      chargeFrameRef.current = null;
+    }
+    chargeStartedAtRef.current = null;
+    chargeRef.current = 0;
+    setCharge(0);
+    setAnnouncement("Đã hủy tích lực");
+  };
+
+  const beginPointerCharge = (event: PointerEvent<HTMLButtonElement>) => {
+    if (busy) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    beginCharge();
+  };
+
+  const finishPointerCharge = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    finishCharge();
+  };
+
+  const beginKeyboardCharge = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== " " && event.key !== "Enter") return;
+    event.preventDefault();
+    beginCharge();
+  };
+
+  const finishKeyboardCharge = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== " " && event.key !== "Enter") return;
+    event.preventDefault();
+    finishCharge();
+  };
+
+  const returnToReady = () => {
+    if (busy) return;
+    requestRef.current += 1;
+    stopAll();
+    if (chargeFrameRef.current !== null) {
+      cancelAnimationFrame(chargeFrameRef.current);
+      chargeFrameRef.current = null;
+    }
+    chargeStartedAtRef.current = null;
+    chargeRef.current = 0;
+    setCharge(0);
+    setSpinDuration(CHEST_SPIN_MS);
+    setResult(null);
+    setError(null);
+    setStage("ready");
+    setAnnouncement("Sẵn sàng — nhấn giữ để quay lượt tiếp theo");
   };
 
   const commit = () => {
@@ -211,6 +342,7 @@ export function FoodChestStage({
             result={result}
             previewFoods={previewFoods}
             spinning={spinning}
+            spinDuration={spinDuration}
             onTick={tick}
             onComplete={finishReel}
           />
@@ -221,12 +353,20 @@ export function FoodChestStage({
                   ? "Món ngon nào đang chờ bạn?"
                   : stage === "settling"
                     ? "Đã tìm thấy món của bạn"
-                    : "Hôm nay, thử một điều bất ngờ"}
+                    : fullyCharged
+                      ? "ĐÃ TÍCH ĐẦY — THẢ TAY!"
+                      : charge > 0
+                        ? "Đang tích lực khai mở"
+                        : "Hôm nay, thử một điều bất ngờ"}
               </h3>
               <p>
                 {spinning
                   ? "Chờ thẻ món dừng ở vạch vàng."
-                  : "Mở hòm và chọn món cho bữa ăn của cả nhà."}
+                  : fullyCharged
+                    ? "FULL CHARGE · Reel sẽ quay lâu nhất."
+                    : charge > 0
+                      ? `Tích lực ${chargePercent}% — thả tay để quay lâu hơn.`
+                      : "Nhấn giữ để tích lực, rồi thả tay để khai mở hòm."}
               </p>
             </div>
             <Button
@@ -234,17 +374,46 @@ export function FoodChestStage({
               size="lg"
               className="food-chest-cta h-12 w-full max-w-sm rounded-sm text-sm font-bold tracking-[0.1em] uppercase"
               disabled={busy}
-              onClick={startRoll}
+              data-charging={charge > 0}
+              data-full-charge={fullyCharged}
+              onPointerDown={beginPointerCharge}
+              onPointerUp={finishPointerCharge}
+              onPointerCancel={cancelCharge}
+              onKeyDown={beginKeyboardCharge}
+              onKeyUp={finishKeyboardCharge}
+              onContextMenu={(event) => event.preventDefault()}
+              aria-describedby="food-chest-charge-help"
+              aria-label={
+                fullyCharged
+                  ? "Đã tích đầy lực, thả tay để khai mở"
+                  : "Nhấn giữ để tích lực khai mở hòm món"
+              }
             >
-              {stage === "loading" ? <Spinner /> : <PackageOpen />}
-              {stage === "loading"
-                ? "Đang chuẩn bị…"
-                : spinning || stage === "settling"
-                  ? "Đang mở khóa…"
-                  : result
-                    ? "Khai mở lần nữa"
-                    : "Khai mở hòm món"}
+              <span
+                className="food-chest-charge-fill"
+                style={{ width: `${charge * 100}%` }}
+                aria-hidden="true"
+              />
+              <span className="food-chest-cta-content">
+                {stage === "loading" ? <Spinner /> : <PackageOpen />}
+                {stage === "loading"
+                  ? "Đang chuẩn bị…"
+                  : spinning || stage === "settling"
+                    ? "Đang mở khóa…"
+                    : result
+                      ? "Khai mở lần nữa"
+                      : "Khai mở hòm món"}
+              </span>
+              {charge > 0 ? (
+                <span className="food-chest-charge-badge" aria-hidden="true">
+                  {fullyCharged ? "FULL CHARGE" : `${chargePercent}%`}
+                </span>
+              ) : null}
             </Button>
+            <span id="food-chest-charge-help" className="sr-only">
+              Nhấn giữ nút để tích lực từ 0 đến 100 phần trăm. Thả nút để bắt
+              đầu quay; tích lực càng đầy, reel quay càng lâu.
+            </span>
             <div className="food-chest-labels">
               <span>Đổi vị</span>
               <span>Hợp gu</span>
@@ -294,7 +463,7 @@ export function FoodChestStage({
                   type="button"
                   variant="outline"
                   className="food-chest-secondary h-11 rounded-sm"
-                  onClick={startRoll}
+                  onClick={returnToReady}
                   disabled={busy}
                 >
                   <RotateCw />

@@ -81,6 +81,17 @@ describe("pickFood", () => {
     }
   });
 
+  it("không lặp món đã quay trước đó khi vẫn còn lựa chọn khác", () => {
+    const foods = pool(4, "MAIN");
+    const picked = pickFood(foods, {
+      usedIds: new Set(),
+      avoidIds: new Set(["MAIN-0", "MAIN-1"]),
+      now: NOW,
+      rng: () => 0.5,
+    });
+    expect(["MAIN-2", "MAIN-3"]).toContain(picked?.id);
+  });
+
   it("pool cạn thì nới lỏng thay vì trả null", () => {
     const foods = pool(2, "MAIN");
     const used = new Set(["MAIN-0", "MAIN-1"]);
@@ -120,6 +131,22 @@ describe("pickFood", () => {
       rng: () => 0,
     });
     expect(picked?.id).toBe("new-method");
+  });
+
+  it("mở hòm chọn đều toàn bộ pool, không phụ thuộc điểm món", () => {
+    const foods = [
+      food({ id: "favorite", favoriteScore: 5 }),
+      ...Array.from({ length: 4 }, (_, index) =>
+        food({ id: `explore-${index}` })
+      ),
+    ];
+    const picked = pickFood(foods, {
+      usedIds: new Set(),
+      now: NOW,
+      selectionMode: "uniform",
+      rng: () => 0.99,
+    });
+    expect(picked?.id).toBe("explore-3");
   });
 });
 

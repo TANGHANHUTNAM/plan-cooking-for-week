@@ -259,9 +259,7 @@ export function SwapSheet({
         <FoodChestStage
           target={spinTarget}
           period={period}
-          previewFoods={(foods ?? [])
-            .filter((food) => food.type === position)
-            .slice(0, 7)}
+          previewFoods={(foods ?? []).filter((food) => food.type === position)}
           onBack={() => setChestOpen(false)}
           onCommitted={() => onOpenChange(false)}
         />

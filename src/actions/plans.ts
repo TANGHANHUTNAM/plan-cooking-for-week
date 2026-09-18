@@ -732,20 +732,21 @@ function isSpinTarget(value: unknown): value is SpinTarget {
     (target.expectedFoodId === undefined ||
       target.expectedFoodId === null ||
       (typeof target.expectedFoodId === "string" &&
-        target.expectedFoodId.length > 0))
+        target.expectedFoodId.length > 0)) &&
+    (target.avoidFoodIds === undefined ||
+      (Array.isArray(target.avoidFoodIds) &&
+        target.avoidFoodIds.length <= 100 &&
+        target.avoidFoodIds.every(
+          (foodId) => typeof foodId === "string" && foodId.length > 0
+        )))
   );
 }
 
-type SpinContext = Awaited<ReturnType<typeof loadSpinContext>>;
-
-/** Load one slot and the same week/day exclusions used by the existing random engine. */
+/** Load one slot for stale-state validation; chest selection has no plan-based exclusions. */
 async function loadSpinContext(target: SpinTarget) {
   const meal = await prisma.meal.findUnique({
     where: { id: target.mealId },
-    include: {
-      items: true,
-      mealPlan: { include: { meals: { include: { items: true } } } },
-    },
+    include: { items: true },
   });
   if (!meal) return null;
 
@@ -762,54 +763,22 @@ async function loadSpinContext(target: SpinTarget) {
     return null;
   }
 
-  const used = new Set<string>();
-  const sameDay = new Set<string>();
-  const usedCounts = new Map<string, number>();
   const mealDate = dateToISO(meal.date);
 
-  for (const weekMeal of meal.mealPlan.meals) {
-    const isSameDay = dateToISO(weekMeal.date) === mealDate;
-    for (const mealItem of weekMeal.items) {
-      if (mealItem.id === item?.id) continue;
-      used.add(mealItem.foodId);
-      usedCounts.set(
-        mealItem.foodId,
-        (usedCounts.get(mealItem.foodId) ?? 0) + 1
-      );
-      if (isSameDay) sameDay.add(mealItem.foodId);
-    }
-  }
-
-  return { meal, item, used, sameDay, usedCounts, dateISO: mealDate };
+  return { item, dateISO: mealDate };
 }
 
 function spinCandidateIsAllowed(
   foodId: string,
   pool: CandidateFood[],
-  context: NonNullable<SpinContext>
+  avoidFoodIds: readonly string[] | undefined
 ): boolean {
-  const avoid = new Set(context.sameDay);
-  if (context.item) avoid.add(context.item.foodId);
-
-  const strict = pool.filter(
-    (food) => !context.used.has(food.id) && !avoid.has(food.id)
+  return (
+    pool.some((food) => food.id === foodId) && !avoidFoodIds?.includes(foodId)
   );
-  if (strict.length > 0) {
-    return strict.some((food) => food.id === foodId);
-  }
-
-  let relaxed = pool.filter((food) => !avoid.has(food.id));
-  if (relaxed.length === 0) relaxed = [...pool];
-  const minimum = Math.min(
-    ...relaxed.map((food) => context.usedCounts.get(food.id) ?? 0)
-  );
-  relaxed = relaxed.filter(
-    (food) => (context.usedCounts.get(food.id) ?? 0) === minimum
-  );
-  return relaxed.some((food) => food.id === foodId);
 }
 
-/** Preview a smart result without changing the meal plan. */
+/** Preview a uniform random result without changing the meal plan. */
 export async function rollFoodForSlot(target: SpinTarget): Promise<{
   error?: string;
   result?: FoodSpinResultDTO;
@@ -838,13 +807,18 @@ export async function rollFoodForSlot(target: SpinTarget): Promise<{
     };
   }
 
-  const avoid = new Set(context.sameDay);
-  if (context.item) avoid.add(context.item.foodId);
-  const selected = pickFood(pool, {
-    usedIds: context.used,
-    avoidIds: avoid,
-    usedCounts: context.usedCounts,
-    usedMethodCounts: countUsedMethods(pool, context.used),
+  const rollPool = pool.filter(
+    (food) => !target.avoidFoodIds?.includes(food.id)
+  );
+  if (rollPool.length === 0) {
+    return {
+      error: "Bạn đã quay hết món trong hòm này — hãy đóng và mở lại nhé",
+    };
+  }
+
+  const selected = pickFood(rollPool, {
+    usedIds: new Set(),
+    selectionMode: "uniform",
     now: new Date(),
   });
   if (!selected) return { error: "Không còn món phù hợp để mở hòm" };
@@ -852,7 +826,7 @@ export async function rollFoodForSlot(target: SpinTarget): Promise<{
   return {
     result: {
       selected: toSpinFood(selected),
-      reel: buildFoodChestReel(pool, selected).map(toSpinFood),
+      reel: buildFoodChestReel(rollPool, selected).map(toSpinFood),
       label: foodChestLabel(selected.favoriteScore),
     },
   };
@@ -884,7 +858,7 @@ export async function commitFoodRoll(
     (food) => food.type === target.position
   );
   const selected = pool.find((food) => food.id === foodId);
-  if (!selected || !spinCandidateIsAllowed(foodId, pool, context)) {
+  if (!selected || !spinCandidateIsAllowed(foodId, pool, target.avoidFoodIds)) {
     return { error: SPIN_STALE_MESSAGE };
   }
 

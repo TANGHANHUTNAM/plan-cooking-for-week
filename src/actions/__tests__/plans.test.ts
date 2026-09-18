@@ -283,7 +283,7 @@ describe("food chest actions", () => {
     vi.useRealTimers();
   });
 
-  it("previews a smart result without writing the meal", async () => {
+  it("previews a uniform result without writing the meal", async () => {
     mocks.mealFindUnique.mockResolvedValue(
       futureSpinMeal([
         { id: "item-current", foodId: "main-current", position: "MAIN" },
@@ -303,6 +303,51 @@ describe("food chest actions", () => {
     expect(result.result?.label).toBe("Món tủ");
     expect(mocks.mealItemUpdateMany).not.toHaveBeenCalled();
     expect(mocks.mealItemCreate).not.toHaveBeenCalled();
+  });
+
+  it("allows the starting dish in the first uniform chest roll", async () => {
+    mocks.mealFindUnique.mockResolvedValue(
+      futureSpinMeal([
+        { id: "item-current", foodId: "main-current", position: "MAIN" },
+      ])
+    );
+    mocks.foodFindMany.mockResolvedValue([
+      candidate("main-current", "MAIN", 0),
+    ]);
+
+    const result = await rollFoodForSlot({
+      mealId: "meal-target",
+      position: "MAIN",
+      itemId: "item-current",
+      expectedFoodId: "main-current",
+    });
+
+    expect(result.result?.selected.id).toBe("main-current");
+  });
+
+  it("skips dishes previewed earlier in the same chest session", async () => {
+    mocks.mealFindUnique.mockResolvedValue(
+      futureSpinMeal([
+        { id: "item-current", foodId: "main-current", position: "MAIN" },
+      ])
+    );
+    mocks.foodFindMany.mockResolvedValue([
+      candidate("main-first", "MAIN", 5),
+      candidate("main-second", "MAIN", 5),
+    ]);
+
+    const result = await rollFoodForSlot({
+      mealId: "meal-target",
+      position: "MAIN",
+      itemId: "item-current",
+      expectedFoodId: "main-current",
+      avoidFoodIds: ["main-first"],
+    });
+
+    expect(result.result?.selected.id).toBe("main-second");
+    expect(result.result?.reel.some((food) => food.id === "main-first")).toBe(
+      false
+    );
   });
 
   it("blocks a roll for today before loading candidates", async () => {

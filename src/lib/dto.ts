@@ -43,6 +43,8 @@ export interface SpinTarget {
   itemId: string | null;
   /** Used to reject a result when the current item changed in another tab. */
   expectedFoodId?: string | null;
+  /** Ephemeral IDs previewed earlier in this chest session; never persisted. */
+  avoidFoodIds?: string[];
 }
 
 export interface SpinFoodDTO {

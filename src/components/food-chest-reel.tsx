@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { FoodSpinResultDTO, SpinFoodDTO } from "@/lib/dto";
 import { foodChestLabel } from "@/lib/food-chest";
@@ -19,22 +19,53 @@ export function FoodChestReel({
   result,
   previewFoods,
   spinning,
+  spinDuration = CHEST_SPIN_MS,
   onTick,
   onComplete,
 }: {
   result: FoodSpinResultDTO | null;
   previewFoods: SpinFoodDTO[];
   spinning: boolean;
+  spinDuration?: number;
   onTick: () => void;
   onComplete: () => void;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const track = useMemo(
-    () => (result ? buildChestTrack(result) : null),
-    [result]
+  const [previewCards, setPreviewCards] = useState<SpinFoodDTO[]>([]);
+  const travelCycles = Math.max(
+    4,
+    Math.round((spinDuration / CHEST_SPIN_MS) * 4)
   );
-  const cards = track?.cards ?? previewFoods;
+  const track = useMemo(
+    () => (result ? buildChestTrack(result, travelCycles) : null),
+    [result, travelCycles]
+  );
+  const placeholderCards = useMemo(
+    () => Array.from({ length: 7 }, () => null),
+    []
+  );
+
+  useEffect(() => {
+    if (result) return;
+
+    const frame = requestAnimationFrame(() => {
+      const shuffled = [...previewFoods];
+      for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[swapIndex]] = [
+          shuffled[swapIndex],
+          shuffled[index],
+        ];
+      }
+      setPreviewCards(shuffled.slice(0, 7));
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [previewFoods, result]);
+
+  const cards =
+    track?.cards ?? (previewCards.length ? previewCards : placeholderCards);
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -73,7 +104,7 @@ export function FoodChestReel({
       if (origin === null) origin = now;
       const elapsed = now - origin;
       position =
-        start + (end - start) * chestTravelProgress(elapsed, CHEST_SPIN_MS);
+        start + (end - start) * chestTravelProgress(elapsed, spinDuration);
       paint();
       const passing = Math.round(position);
       if (passing !== lastTick && now - lastTickAt > 45) {
@@ -81,7 +112,7 @@ export function FoodChestReel({
         lastTickAt = now;
         onTick();
       }
-      if (elapsed >= CHEST_SPIN_MS || media.matches) complete();
+      if (elapsed >= spinDuration || media.matches) complete();
       else frame = requestAnimationFrame(animate);
     };
     const motionChanged = () => {
@@ -102,7 +133,7 @@ export function FoodChestReel({
       resize.disconnect();
       media.removeEventListener("change", motionChanged);
     };
-  }, [cards.length, onComplete, onTick, spinning, track]);
+  }, [cards.length, onComplete, onTick, spinDuration, spinning, track]);
 
   return (
     <div
@@ -131,7 +162,7 @@ export function FoodChestReel({
               }
             >
               <span className="food-chest-card-label">
-                {food ? foodChestLabel(food.favoriteScore) : "Khám phá"}
+                {food ? foodChestLabel(food.favoriteScore) : "Ẩn món"}
               </span>
               <FoodChestArtwork
                 name={food?.name ?? ""}

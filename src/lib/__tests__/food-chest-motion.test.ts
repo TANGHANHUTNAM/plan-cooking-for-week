@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   buildChestTrack,
+  CHEST_FULL_CHARGE_SPIN_MS,
   CHEST_SPIN_MS,
+  chestSpinDuration,
   chestTravelProgress,
 } from "@/lib/food-chest-motion";
 import type { FoodSpinResultDTO, SpinFoodDTO } from "@/lib/dto";
@@ -32,6 +34,14 @@ describe("chest presentation motion", () => {
     expect(result).toEqual(original);
   });
 
+  it("scales travel cycles with the longer full-charge duration", () => {
+    const normal = buildChestTrack(result, 4);
+    const fullCharge = buildChestTrack(result, 10);
+    expect(normal.selectedIndex - normal.startIndex).toBe(28);
+    expect(fullCharge.selectedIndex - fullCharge.startIndex).toBe(70);
+    expect(fullCharge.cards[fullCharge.selectedIndex]).toEqual(selected);
+  });
+
   it("handles one-dish and missing presentation pools", () => {
     for (const reel of [[], [selected]]) {
       const track = buildChestTrack({ ...result, reel });
@@ -55,5 +65,13 @@ describe("chest presentation motion", () => {
     });
     expect(chestTravelProgress(-100, CHEST_SPIN_MS)).toBe(0);
     expect(chestTravelProgress(CHEST_SPIN_MS + 1000, CHEST_SPIN_MS)).toBe(1);
+  });
+
+  it("maps charge linearly to a longer spin while clamping charge", () => {
+    expect(chestSpinDuration(0)).toBe(CHEST_SPIN_MS);
+    expect(chestSpinDuration(0.5)).toBe(9750);
+    expect(chestSpinDuration(1)).toBe(CHEST_FULL_CHARGE_SPIN_MS);
+    expect(chestSpinDuration(-1)).toBe(CHEST_SPIN_MS);
+    expect(chestSpinDuration(2)).toBe(CHEST_FULL_CHARGE_SPIN_MS);
   });
 });
